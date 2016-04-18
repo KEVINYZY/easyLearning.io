@@ -51,5 +51,5 @@ local net = buildNet(3, 3, 32, 5)
 local xyr = buildXYRInput(640, 640)
 xyr = xyr / 500.0
 local out = net:forward(xyr)
-image.savePNG('/tmp/xx.png',out)
+image.savePNG('./output.png',out)
 
