@@ -10,23 +10,32 @@ end
 local g = {}
 g.batchSize = 128
 
-local loadBatch = function(index)
+local loadBatch = function(index, isTest)
     local ii = index or 1
-    
+   
+    local data = g.allTrainSamples.data
+    local labels = g.allTrainSamples.labels
+    if ( isTest ) then
+        data = g.allTestSamples.data
+        labels = g.allTestSamples.labels
+    end
+
+    local number = data:size(1)
+
     local batch = {}
     batch.data = torch.Tensor(g.batchSize, 2, 1, 32, 32) 
     batch.label = torch.zeros(g.batchSize) - 1
     for i = 1, g.batchSize do
-        batch.data[i][1]:copy ( g.allTrainSamples.data[ii] )
-        local iii = g.siamesePairs[ii]
-        batch.data[i][2]:copy ( g.allTrainSamples.data[iii] )
+        batch.data[i][1]:copy ( data[ii] )
+        local iii = g.siamese[ii]
+        batch.data[i][2]:copy ( data[iii] )
 
-        if ( g.allTrainSamples.labels[ii] == g.allTrainSamples.labels[iii] ) then
+        if ( labels[ii] == labels[iii] ) then
             batch.label[i] = 1
         end
 
         ii = ii + 1
-        if ( ii > g.trainNumber ) then
+        if ( ii > number ) then
             ii = 1
         end
     end
@@ -40,6 +49,8 @@ local loadBatch = function(index)
 end
 
 local doTrain = function()
+    print(">>>>>>>>>>>>>TRAINING>>>>>>>>>>>>>");
+    
     if _CUDA_ then
         g.model:cuda()
         g.criterion:cuda()
@@ -68,7 +79,7 @@ local doTrain = function()
     end
 
     local index = 1
-    local maxIterate = torch.floor( g.trainNumber / g.batchSize )
+    local maxIterate = torch.floor( g.allTrainSamples.data:size(1) / g.batchSize )
     for i = 1, maxIterate do
         batch, index = loadBatch(index)
         
@@ -80,7 +91,28 @@ local doTrain = function()
 end
 
 local doTest = function()
+    print(">>>>>>>>>>>>>TESTING>>>>>>>>>>>>>");
+
+    if _CUDA_ then
+        g.model:cuda()
+        g.criterion:cuda()
+    end
+    g.model:evaluate()
     
+    local index = 1
+    local maxIterate = torch.floor( g.allTestSamples.data:size(1) / g.batchSize )
+    local fsum = 0
+    for i = 1, maxIterate do
+        batch, index = loadBatch(index)
+        
+        local distance = g.model:forward(batch.data)
+        local f = g.criterion:forward(distance, batch.label)
+        fsum = fsum +f
+        collectgarbage();
+        xlua.progress(i, maxIterate)
+    end
+
+    print("Loss function = " .. fsum/maxIterate)
 end
 
 local main = function()
@@ -110,12 +142,11 @@ local main = function()
     data:add(-mean);
     data:mul(1.0/std);
 
-
-    local number = g.allTrainSamples.data:size(1)
-    g.trainNumber = number
     for i = 1, 32 do
-        g.siamesePairs = torch.randperm(number)
+        g.siamese = torch.randperm(g.allTrainSamples.data:size(1))
         doTrain()
+        g.siamese = torch.randperm(g.allTestSamples.data:size(1))
+        doTest()
     end
 end 
 
