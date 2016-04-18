@@ -18,9 +18,7 @@ function build_model()
     cnn:add(nn.Reshape(32*4*4)) 
     cnn:add(nn.Linear(32*4*4, 512))
     cnn:add(nn.ReLU())
-    cnn:add(nn.Linear(512, 10))
-    --cnn:add(nn.Sigmoid())
-    cnn:add(nn.Linear(10, 2))
+    cnn:add(nn.Linear(512, 2))
 
     --The siamese model
     --clone the encoder and share the weight, bias. Must also share the gradWeight and gradBias

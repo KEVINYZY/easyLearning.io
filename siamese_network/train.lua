@@ -8,15 +8,14 @@ if ( _CUDA_ ) then
   require('cunn')
 end
 local g = {}
-g.batchSize = 32
-
+g.batchSize = 128
 
 local loadBatch = function(index)
     local ii = index or 1
     
     local batch = {}
     batch.data = torch.Tensor(g.batchSize, 2, 1, 32, 32) 
-    batch.label = torch.zeros(g.batchSize)
+    batch.label = torch.zeros(g.batchSize) - 1
     for i = 1, g.batchSize do
         batch.data[i][1]:copy ( g.allTrainSamples.data[ii] )
         local iii = g.siamesePairs[ii]
@@ -26,18 +25,16 @@ local loadBatch = function(index)
             batch.label[i] = 1
         end
 
-        ii = i + 1
+        ii = ii + 1
         if ( ii > g.trainNumber ) then
             ii = 1
         end
-
     end
 
     if _CUDA_ then
         batch.data = batch.data:cuda()
         batch.label = batch.label:cuda()
     end
-
 
     return batch, ii
 end
@@ -61,13 +58,12 @@ local doTrain = function()
         gradParameters:zero()
        
         local distance = g.model:forward(batch.data)
-        
+
         local f = g.criterion:forward(distance, batch.label)
         local df = g.criterion:backward(distance, batch.label)
-        
+
         g.model:backward(batch.data, df)
 
-        print(">>>>>>>" .. f)
         return f, gradParameters
     end
 
@@ -75,7 +71,7 @@ local doTrain = function()
     local maxIterate = torch.floor( g.trainNumber / g.batchSize )
     for i = 1, maxIterate do
         batch, index = loadBatch(index)
-
+        
         g.optim(feval, parameters, g.optimState)             
     
         collectgarbage();
@@ -83,29 +79,39 @@ local doTrain = function()
     end
 end
 
+local doTest = function()
+    
+end
 
 local main = function()
     torch.setdefaulttensortype('torch.FloatTensor')
 
     g.model = buildModel()
     g.allTrainSamples = torch.load('./mnist.t7/train_32x32.t7', 'ascii')
+    g.allTestSamples = torch.load('./mnist.t7/test_32x32.t7', 'ascii')
     g.criterion = nn.HingeEmbeddingCriterion() 
-    g.optim = optim.sgd
+    g.optim = optim.adam
     g.optimState = {
-        learningRate = 0.05
+        learningRate = 0.001
     }
 
     -- preprocessing train data
     local data = g.allTrainSamples.data
     g.allTrainSamples.data = data:type( torch.getdefaulttensortype() )
+    data = g.allTestSamples.data
+    g.allTestSamples.data = data:type( torch.getdefaulttensortype() )
+
     data = g.allTrainSamples.data
-    
     local std = data:std()
     local mean = data:mean()
     data:add(-mean);
     data:mul(1.0/std);
+    data = g.allTestSamples.data
+    data:add(-mean);
+    data:mul(1.0/std);
 
-    local number = data:size(1)
+
+    local number = g.allTrainSamples.data:size(1)
     g.trainNumber = number
     for i = 1, 32 do
         g.siamesePairs = torch.randperm(number)
