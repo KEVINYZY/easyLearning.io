@@ -112,7 +112,8 @@ local doTest = function()
         xlua.progress(i, maxIterate)
     end
 
-    print("Loss function = " .. fsum/maxIterate)
+    print("Total loss = " .. fsum/maxIterate .. "\n")
+    return fsum/maxIterate
 end
 
 local main = function()
@@ -142,11 +143,16 @@ local main = function()
     data:add(-mean);
     data:mul(1.0/std);
 
-    for i = 1, 32 do
+    local bestScore = 1
+    for i = 1, 128 do
         g.siamese = torch.randperm(g.allTrainSamples.data:size(1))
         doTrain()
         g.siamese = torch.randperm(g.allTestSamples.data:size(1))
-        doTest()
+        local score = doTest()
+        if ( score < bestScore ) then
+            bestScore = score
+            torch.save('./bestModel.t7', g.model)
+        end
     end
 end 
 
