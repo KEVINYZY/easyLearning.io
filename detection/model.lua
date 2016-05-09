@@ -46,9 +46,19 @@ function build_model()
     model:add(nn.Linear(1024, 4096))
     model:add(nn.ReLU())
     
-    local targetSize = flags.grid * flags.grid * ( flags.class + 1 + 4)
-    model:add(nn.Linear(4096, targetSize))
+    local mt = nn.ConcatTable()
+    for i=1,flags.grid * flags.grid do
+        local cc = nn.Sequential();
+        cc:add( nn.Linear(4096, #flags.classmap + 1) )
+        cc:add( nn.LogSoftMax() )
+        mt:add(cc)
 
+        local cb = nn.Sequential();
+        cb:add( nn.Linear(4096, 4) )
+        mt:add(cb)
+    end
+    
+    model:add(mt)
 
     return model
 end

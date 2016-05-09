@@ -54,8 +54,25 @@ local buildSample = function(allDB, i)
     img = image.crop(img, bx-1, by-1, ex, ey)
 
     -- build target vector
-    local targetSize = flags.grid * flags.grid * ( flags.class + 1 + 4)
-    local target = torch.Tensor(targetSize)
+    local singleBoxSize = #flags.classmap + 1 + 4
+
+    local targetSize = flags.grid * flags.grid * singleBoxSize
+    local target = torch.zeros(targetSize)
+   
+
+    for y = 1, flags.grid do
+        for x = 1, flags.grid do
+            local offset = (y-1)*flags.grid + x -1 
+            target[offset * singleBoxSize + 1] = (x - 1) / flags.grid
+            target[offset * singleBoxSize + 2] = (y - 1) / flags.grid
+
+            target[offset * singleBoxSize + 3] = x / flags.grid
+            target[offset * singleBoxSize + 4] = y / flags.grid
+
+            target[offset * singleBoxSize + 5] = 1.0 
+        end
+    end
+    
     local objs = 0
     for i = 1,#picInfo.boxes do
         xmin = math.max(picInfo.boxes[i].xmin, bx) - bx
@@ -69,9 +86,19 @@ local buildSample = function(allDB, i)
         cx = math.floor( cx * flags.grid / flags.imageWidth) 
         cy = math.floor( cy * flags.grid / flags.imageHeight)
 
-        if ( cx >= 0 and cx < 8 and cy > 0 and cy < 8) then
+        if ( cx >= 0 and cx < flags.grid and cy >= 0 and cy < flags.grid) then
             objs = objs + 1 
-            -- TODO
+            local offset = cx + cy * flags.grid
+            local class = flags.classmap[ picInfo.boxes[i].name ]
+
+            target[offset * singleBoxSize + 1] = xmin / flags.imageWidth
+            target[offset * singleBoxSize + 2] = ymin / flags.imageHeight
+
+            target[offset * singleBoxSize + 3] = xmax / flags.imageWidth
+            target[offset * singleBoxSize + 4] = ymax / flags.imageHeight
+
+            target[offset * singleBoxSize + 5] = 0.0
+            target[offset * singleBoxSize + 5 + class] = 1.0
         end
     end
     
@@ -109,7 +136,7 @@ local json = require "cjson"
 local util = require "cjson.util"
 local boxDB = json.decode(util.file_load(flags.allDB))
 
-for i = 1,#boxDB do
+for i = 1,10 do
     buildSample(boxDB, i)
 end
 
