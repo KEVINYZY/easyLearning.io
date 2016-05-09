@@ -45,7 +45,9 @@ function build_model()
     model:add(nn.ReLU())
     model:add(nn.Linear(1024, 4096))
     model:add(nn.ReLU())
-    model:add(nn.Linear(4096, 1600))
+    
+    local targetSize = flags.grid * flags.grid * ( flags.class + 1 + 4)
+    model:add(nn.Linear(4096, targetSize))
 
 
     return model
