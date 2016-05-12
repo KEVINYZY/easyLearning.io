@@ -1,6 +1,8 @@
 require 'nn'
 
-function build_model()
+local flags = require('./flags')
+
+local function build_model()
     
     local model = nn.Sequential()
     
@@ -52,12 +54,8 @@ function build_model()
         cc:add( nn.Linear(4096, #flags.classmap + 1) )
         cc:add( nn.LogSoftMax() )
         mt:add(cc)
-
-        local cb = nn.Sequential();
-        cb:add( nn.Linear(4096, 4) )
-        mt:add(cb)
     end
-    
+    mt:add ( nn.Linear(4096, 4 * flags.grid * flags.grid) )
     model:add(mt)
 
     return model

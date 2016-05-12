@@ -53,23 +53,23 @@ local buildSample = function(allDB, i)
     local img = image.loadJPG( flags.imagePath .. "/" .. picInfo.filename)
     img = image.crop(img, bx-1, by-1, ex, ey)
 
-    -- build target vector
-    local singleBoxSize = #flags.classmap + 1 + 4
-
-    local targetSize = flags.grid * flags.grid * singleBoxSize
-    local target = torch.zeros(targetSize)
-   
+    -- build target value
+    local targets = {}
+    for i=1,flags.grid * flags.grid do
+        targets[i] = 1
+    end
+    
+    local boxPos = torch.Tensor( flags.grid * flags.grid * 4) 
+    targets[flags.grid * flags.grid + 1] = boxPos
 
     for y = 1, flags.grid do
         for x = 1, flags.grid do
-            local offset = (y-1)*flags.grid + x -1 
-            target[offset * singleBoxSize + 1] = (x - 1) / flags.grid
-            target[offset * singleBoxSize + 2] = (y - 1) / flags.grid
-
-            target[offset * singleBoxSize + 3] = x / flags.grid
-            target[offset * singleBoxSize + 4] = y / flags.grid
-
-            target[offset * singleBoxSize + 5] = 1.0 
+            local offset = ((y-1)*flags.grid + x - 1) * 4
+            
+            boxPos[offset + 1] = (x - 1) / flags.grid
+            boxPos[offset + 2] = (y - 1) / flags.grid
+            boxPos[offset + 3] = x / flags.grid
+            boxPos[offset + 4] = y / flags.grid
         end
     end
     
@@ -88,25 +88,27 @@ local buildSample = function(allDB, i)
 
         if ( cx >= 0 and cx < flags.grid and cy >= 0 and cy < flags.grid) then
             objs = objs + 1 
-            local offset = cx + cy * flags.grid
+            
+            local offset = cx + cy * flags.grid + 1
             local class = flags.classmap[ picInfo.boxes[i].name ]
+            targets[offset] = class + 1
+            
+            offset = (offset - 1) * 4
 
-            target[offset * singleBoxSize + 1] = xmin / flags.imageWidth
-            target[offset * singleBoxSize + 2] = ymin / flags.imageHeight
-
-            target[offset * singleBoxSize + 3] = xmax / flags.imageWidth
-            target[offset * singleBoxSize + 4] = ymax / flags.imageHeight
-
-            target[offset * singleBoxSize + 5] = 0.0
-            target[offset * singleBoxSize + 5 + class] = 1.0
+            boxPos[offset + 1] = xmin / flags.imageWidth
+            boxPos[offset + 2] = ymin / flags.imageHeight
+            boxPos[offset + 3] = xmax / flags.imageWidth
+            boxPos[offset + 4] = ymax / flags.imageHeight
         end
     end
     
     if objs == 0 then
         return nil
     end
+    
+    print(targets)
 
-    return img, target
+    return img, targets
 end
 
 function buildData(allDB, batch)
