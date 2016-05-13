@@ -106,13 +106,12 @@ local buildSample = function(allDB, i)
         return nil
     end
     
-    print(targets)
 
     return img, targets
 end
 
 function buildData(allDB, batch)
-    local intputs = {}
+    local inputs = {}
     local targets = {}
 
     for i = 1, #batch do
@@ -124,22 +123,34 @@ function buildData(allDB, batch)
     end
 
     local batchInput = torch.Tensor(#inputs, 3, flags.imageHeight, flags.imageWidth)
-    local batchTarget = torch.Tensor(#targets, 1600)
     for i = 1, #input do
         batchInput[i]:copy( inputs[i] )
     end
-    for i = 1, #targets do
-        batchTarget[i]:copy( targets[i] )
+   
+    local batchTargets = {}
+    for i=1, flags.grid * flags.grid do
+        batchTargets[i] = torch.Tensor(#inputs)
+        for j = 1, #inputs do
+            batchTargets[i][j] = targets[j][i] 
+        end
     end
+    
+    local posTarget = torch.Tensor(#inputs, flags.grid * flags.grid * 4)
+    batchTargets[flags.grid * flags.grid + 1] = posTarget
+    for i = 1, #inputs do
+        posTarget[i]:copy( targets[i][ flags.grid * flags.grid + 1 ] ) 
+    end
+    
+    print(batchTargets)
 
+    return batchInput, batchTargets
 end
 
+--[[
 local json = require "cjson"
 local util = require "cjson.util"
 local boxDB = json.decode(util.file_load(flags.allDB))
-
-for i = 1,10 do
-    buildSample(boxDB, i)
-end
+buildData(boxDB, {1,2,3,4})
+--]]
 
 return buildData
