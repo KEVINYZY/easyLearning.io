@@ -52,7 +52,9 @@ local buildSample = function(allDB, i)
 
     local img = image.loadJPG( flags.imagePath .. "/" .. picInfo.filename)
     img = image.crop(img, bx-1, by-1, ex, ey)
-
+    img = img - 0.5
+    img = img * 256
+    
     -- build target value
     local targets = {}
     for i=1,flags.grid * flags.grid do
@@ -141,7 +143,9 @@ function buildData(allDB, batch)
         posTarget[i]:copy( targets[i][ flags.grid * flags.grid + 1 ] ) 
     end
     
-    print(batchTargets)
+    if flags._cuda_ then
+        
+    end
 
     return batchInput, batchTargets
 end
