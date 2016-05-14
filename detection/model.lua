@@ -1,4 +1,5 @@
 require 'nn'
+require 'cunn'
 
 local flags = require('./flags')
 
@@ -7,37 +8,37 @@ local function build_model()
     local model = nn.Sequential()
     
     -- 448 x 448
-    model:add(nn.SpatialConvolution(3, 16, 3, 3, 1, 1))    
+    model:add(nn.SpatialConvolutionMM(3, 16, 3, 3, 1, 1))    
     model:add(nn.ReLU())
-    model:add(nn.SpatialConvolution(16, 32, 3, 3, 1, 1))    
-    model:add(nn.ReLU())
-    model:add(nn.SpatialMaxPooling(2, 2))
-    
-    model:add(nn.SpatialConvolution(32, 32, 3, 3, 1, 1))    
-    model:add(nn.ReLU())
-    model:add(nn.SpatialConvolution(32, 64, 3, 3, 1, 1))    
+    model:add(nn.SpatialConvolutionMM(16, 32, 3, 3, 1, 1))    
     model:add(nn.ReLU())
     model:add(nn.SpatialMaxPooling(2, 2))
- 
-    model:add(nn.SpatialConvolution(64, 64, 3, 3, 1, 1))    
+   
+    model:add(nn.SpatialConvolutionMM(32, 32, 3, 3, 1, 1))    
     model:add(nn.ReLU())
-    model:add(nn.SpatialConvolution(64, 128, 3, 3, 1, 1))    
+    model:add(nn.SpatialConvolutionMM(32, 64, 3, 3, 1, 1))    
     model:add(nn.ReLU())
     model:add(nn.SpatialMaxPooling(2, 2))
  
-    model:add(nn.SpatialConvolution(128, 128, 3, 3, 1, 1))    
+    model:add(nn.SpatialConvolutionMM(64, 64, 3, 3, 1, 1))    
     model:add(nn.ReLU())
-    model:add(nn.SpatialConvolution(128, 128, 3, 3, 1, 1))    
+    model:add(nn.SpatialConvolutionMM(64, 128, 3, 3, 1, 1))    
     model:add(nn.ReLU())
-    model:add(nn.SpatialConvolution(128, 256, 3, 3, 1, 1))    
+    model:add(nn.SpatialMaxPooling(2, 2))
+ 
+    model:add(nn.SpatialConvolutionMM(128, 128, 3, 3, 1, 1))    
+    model:add(nn.ReLU())
+    model:add(nn.SpatialConvolutionMM(128, 128, 3, 3, 1, 1))    
+    model:add(nn.ReLU())
+    model:add(nn.SpatialConvolutionMM(128, 256, 3, 3, 1, 1))    
     model:add(nn.ReLU())
     model:add(nn.SpatialMaxPooling(2, 2))
     
-    model:add(nn.SpatialConvolution(256, 256, 3, 3, 1, 1))    
+    model:add(nn.SpatialConvolutionMM(256, 256, 3, 3, 1, 1))    
     model:add(nn.ReLU())
-    model:add(nn.SpatialConvolution(256, 512, 3, 3, 1, 1))    
+    model:add(nn.SpatialConvolutionMM(256, 512, 3, 3, 1, 1))    
     model:add(nn.ReLU())
-    model:add(nn.SpatialConvolution(512, 512, 3, 3, 1, 1))    
+    model:add(nn.SpatialConvolutionMM(512, 512, 3, 3, 1, 1))    
     model:add(nn.ReLU())
     model:add(nn.SpatialMaxPooling(2, 2))
 
@@ -47,7 +48,7 @@ local function build_model()
     model:add(nn.ReLU())
     model:add(nn.Linear(1024, 4096))
     model:add(nn.ReLU())
-    
+
     local mt = nn.ConcatTable()
     for i=1,flags.grid * flags.grid do
         local cc = nn.Sequential();
@@ -57,7 +58,7 @@ local function build_model()
     end
     mt:add ( nn.Linear(4096, 4 * flags.grid * flags.grid) )
     model:add(mt)
-
+    
     return model
 end
 

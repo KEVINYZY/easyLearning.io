@@ -10,8 +10,13 @@ function BoxCriterion:__init(lambda)
     self.lambda = lambda
     self.classCriterion = nn.ClassNLLCriterion()
     self.posCriterion = nn.MSECriterion()
-end
+    
+    if ( flags._cuda_ == true) then
+        self.classCriterion:cuda()
+        self.posCriterion:cuda()
+    end
 
+end
 
 function BoxCriterion:updateOutput(input, target)
     local totalLoss = 0.0

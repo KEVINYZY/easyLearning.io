@@ -144,7 +144,10 @@ function buildData(allDB, batch)
     end
     
     if flags._cuda_ then
-        
+        for i = 1, #batchTargets do
+            batchTargets[i] = batchTargets[i]:cuda()
+        end
+        batchInput = batchInput:cuda()
     end
 
     return batchInput, batchTargets

@@ -14,18 +14,14 @@ if ( flags._cuda_ == true) then
 end
 
 local g = {}
-g.batchSize = 6
+g.batchSize = 4
 
 local doTrain = function()
     print(">>>>>>>>>>>>>TRAINING>>>>>>>>>>>>>");
     
-    if _CUDA_ then
-        g.model:cuda()
-        g.criterion:cuda()
-    end
     g.model:training()
 
-    local parameters,gradParameters = model:getParameters()
+    local parameters,gradParameters = g.model:getParameters()
     local batchInput, batchTarget = nil, nil
     local feval = function(x)
         -- get new parameters
@@ -35,9 +31,9 @@ local doTrain = function()
         
         -- reset gradients
         gradParameters:zero()
-       
+        
         local output = g.model:forward(batchInput)
-
+        
         local f = g.criterion:forward(output, batchTarget)
         local df = g.criterion:backward(output, batchTarget)
 
@@ -76,18 +72,24 @@ local main = function()
         learningRate = 0.005
     }
 
+    if ( flags._cuda_ ) then
+        g.model:cuda()
+        g.criterion:cuda()
+    end
+
     -- building train and verify samples 
     g.allSamples = json.decode(util.file_load(flags.allDB))
     local samplesIndex = torch.randperm(#g.allSamples)
     g.trainSamples = {}
     g.verifySamples = {}
-    for i = 1, math.floor(#samplesIndex*0.8) do
+    for i = 1, math.floor(#g.allSamples * 0.8) do
         table.insert(g.trainSamples, g.allSamples[i])
     end
-    for i = #g.trainSamples + 1, #samplesIndex do
+    for i = #g.trainSamples + 1, #g.allSamples do
         table.insert(g.verifySamples, g.allSamples[i])
     end
-
+    
+    doTrain()
 end 
 
 main()
