@@ -66,10 +66,10 @@ local main = function()
     torch.setdefaulttensortype('torch.FloatTensor')
     
     g.model = buildModel()
-    g.criterion = nn.BoxCriterion(5.0)
+    g.criterion = nn.BoxCriterion(1.0)
     g.optim = optim.adam
     g.optimState = {
-        learningRate = 0.005
+        learningRate = 0.0001
     }
 
     if ( flags._cuda_ ) then

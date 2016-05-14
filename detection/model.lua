@@ -56,9 +56,10 @@ local function build_model()
         cc:add( nn.LogSoftMax() )
         mt:add(cc)
     end
-    mt:add ( nn.Linear(4096, 4 * flags.grid * flags.grid) )
+    --mt:add ( nn.Linear(4096, 4 * flags.grid * flags.grid) )
     model:add(mt)
-    
+
+
     return model
 end
 

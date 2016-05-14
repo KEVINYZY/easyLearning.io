@@ -143,6 +143,8 @@ function buildData(allDB, batch)
         posTarget[i]:copy( targets[i][ flags.grid * flags.grid + 1 ] ) 
     end
     
+    batchTargets[ flags.grid * flags.grid + 1 ] = nil
+
     if flags._cuda_ then
         for i = 1, #batchTargets do
             batchTargets[i] = batchTargets[i]:cuda()

@@ -10,12 +10,6 @@ function BoxCriterion:__init(lambda)
     self.lambda = lambda
     self.classCriterion = nn.ClassNLLCriterion()
     self.posCriterion = nn.MSECriterion()
-    
-    if ( flags._cuda_ == true) then
-        self.classCriterion:cuda()
-        self.posCriterion:cuda()
-    end
-
 end
 
 function BoxCriterion:updateOutput(input, target)
@@ -26,11 +20,13 @@ function BoxCriterion:updateOutput(input, target)
         totalLoss = totalLoss + loss
     end
     totalLoss = totalLoss * self.lambda
-   
+    
+    --[[
     local loss = self.posCriterion:forward( input[ flags.grid * flags.grid + 1],
                                            target[ flags.grid * flags.grid + 1] )
     totalLoss = totalLoss + loss
-
+    --]]
+    
     self.output = totalLoss
     return self.output
 end
@@ -42,12 +38,14 @@ function BoxCriterion:updateGradInput(input, target)
         self.gradInput[i] = self.classCriterion:backward(input[i], target[i]):clone()
         self.gradInput[i] = self.gradInput[i] * self.lambda
     end
-
+    
+    --[[
     local grad = self.posCriterion:backward( input[ flags.grid * flags.grid + 1],
                                             target[ flags.grid * flags.grid + 1] )
     
     self.gradInput[ flags.grid * flags.grid + 1 ] = grad
-    
+    --]]
+
     return self.gradInput
 end
 
