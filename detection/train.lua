@@ -15,7 +15,7 @@ if ( flags._cuda_ == true) then
 end
 
 local g = {}
-g.batchSize = 6
+g.batchSize = 5
 
 local doTrain = function()
     print(">>>>>>>>>>>>>TRAINING>>>>>>>>>>>>>");
@@ -67,7 +67,7 @@ local main = function()
     
     g.model = buildModel()
     g.criterion = nn.BoxCriterion(1.0, flags)
-    g.optim = optim.sgd
+    g.optim = optim.adam
     g.optimState = {
         learningRate = 0.001
     }
