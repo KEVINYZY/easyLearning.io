@@ -8,7 +8,14 @@ function BoxCriterion:__init(lambda)
     parent.__init(self)
 
     self.lambda = lambda
-    self.classCriterion = nn.ClassNLLCriterion()
+
+    local classWeight = torch.ones(#flags.classmap + 1)
+    classWeight[1] = 0.1
+    if ( flags._cuda ) then
+        classWeight = classWeight:cuda() 
+    end
+    
+    self.classCriterion = nn.ClassNLLCriterion(classWeight)
     self.posCriterion = nn.MSECriterion()
 end
 
@@ -16,7 +23,7 @@ function BoxCriterion:updateOutput(input, target)
     local totalLoss = 0.0
     
     for i=1, flags.grid * flags.grid do
-        local loss = self.classCriterion:forward(input[i], target[i])   
+        local loss = self.classCriterion:forward(input[i], target[i])
         totalLoss = totalLoss + loss
     end
     totalLoss = totalLoss * self.lambda

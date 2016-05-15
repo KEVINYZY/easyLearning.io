@@ -21,12 +21,14 @@ local function build_model()
     model:add(nn.SpatialMaxPooling(2, 2))
  
     model:add(nn.SpatialConvolutionMM(64, 64, 3, 3, 1, 1))    
+    model:add(nn.SpatialBatchNormalization(64, 1e-3))
     model:add(nn.ReLU())
     model:add(nn.SpatialConvolutionMM(64, 128, 3, 3, 1, 1))    
     model:add(nn.ReLU())
     model:add(nn.SpatialMaxPooling(2, 2))
  
     model:add(nn.SpatialConvolutionMM(128, 128, 3, 3, 1, 1))    
+    model:add(nn.SpatialBatchNormalization(128, 1e-3))
     model:add(nn.ReLU())
     model:add(nn.SpatialConvolutionMM(128, 128, 3, 3, 1, 1))    
     model:add(nn.ReLU())
@@ -35,6 +37,7 @@ local function build_model()
     model:add(nn.SpatialMaxPooling(2, 2))
     
     model:add(nn.SpatialConvolutionMM(256, 256, 3, 3, 1, 1))    
+    model:add(nn.SpatialBatchNormalization(256, 1e-3))
     model:add(nn.ReLU())
     model:add(nn.SpatialConvolutionMM(256, 512, 3, 3, 1, 1))    
     model:add(nn.ReLU())
@@ -44,7 +47,9 @@ local function build_model()
 
     -- full connect
     model:add(nn.Reshape(512*8*8)) 
+    model:add(nn.Dropout(0.5))
     model:add(nn.Linear(512*8*8, 1024))
+    model:add(nn.BatchNormalization(1024))
     model:add(nn.ReLU())
     model:add(nn.Linear(1024, 4096))
     model:add(nn.ReLU())
@@ -58,6 +63,21 @@ local function build_model()
     end
     --mt:add ( nn.Linear(4096, 4 * flags.grid * flags.grid) )
     model:add(mt)
+
+    -- initialization from MSR
+    local function MSRinit(net)
+    local function init(name)
+        for k,v in pairs(net:findModules(name)) do
+        local n = v.kW*v.kH*v.nOutputPlane
+        v.weight:normal(0,math.sqrt(2/n))
+        v.bias:zero()
+        end
+    end
+    -- have to do for both backends
+    init'nn.SpatialConvolutionMM'
+    end
+
+    MSRinit(model)
 
 
     return model

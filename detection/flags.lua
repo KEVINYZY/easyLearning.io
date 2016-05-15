@@ -15,6 +15,6 @@ end
 
 flags.imageWidth = 448
 flags.imageHeight = 448
-flags.grid = 10
+flags.grid = 5
 
 return flags

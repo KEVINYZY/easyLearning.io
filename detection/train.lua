@@ -14,7 +14,7 @@ if ( flags._cuda_ == true) then
 end
 
 local g = {}
-g.batchSize = 4
+g.batchSize = 12
 
 local doTrain = function()
     print(">>>>>>>>>>>>>TRAINING>>>>>>>>>>>>>");
@@ -33,14 +33,13 @@ local doTrain = function()
         gradParameters:zero()
         
         local output = g.model:forward(batchInput)
-        
+
         local f = g.criterion:forward(output, batchTarget)
         local df = g.criterion:backward(output, batchTarget)
 
         g.model:backward(batchInput, df)
-
-        print(">>>>>>>>>>>" .. f )
-
+        
+        print(">>>>>>>>>>" .. f)
         return f, gradParameters
     end
 
@@ -55,7 +54,7 @@ local doTrain = function()
         batchInput, batchTarget = buildData(g.trainSamples, batch)
 
         g.optim(feval, parameters, g.optimState)
-        index = index + g.batchSize
+        --index = index + g.batchSize
 
         xlua.progress(i, maxIterate)
     end
@@ -66,10 +65,10 @@ local main = function()
     torch.setdefaulttensortype('torch.FloatTensor')
     
     g.model = buildModel()
-    g.criterion = nn.BoxCriterion(1.0)
+    g.criterion = nn.BoxCriterion(1.0, flags)
     g.optim = optim.adam
     g.optimState = {
-        learningRate = 0.0001
+        learningRate = 0.001
     }
 
     if ( flags._cuda_ ) then
