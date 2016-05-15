@@ -7,6 +7,7 @@ local json = require "cjson"
 local util = require "cjson.util"
 local flags = require('./flags.lua')
 local buildModel = require('./model.lua')
+--local buildModel = require('./model_vgg.lua')
 local buildData = require('./buildData.lua')
 
 if ( flags._cuda_ == true) then
@@ -14,7 +15,7 @@ if ( flags._cuda_ == true) then
 end
 
 local g = {}
-g.batchSize = 12
+g.batchSize = 4
 
 local doTrain = function()
     print(">>>>>>>>>>>>>TRAINING>>>>>>>>>>>>>");
