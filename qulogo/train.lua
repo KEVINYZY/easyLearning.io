@@ -1,15 +1,16 @@
 require('torch')
-require('lfs')
 require('image')
-local json = require('cjson')
+local u = require('./util')
+local d = require('./data')
 
+-- Checking input paramters and load config
 local cmd = torch.CmdLine()
 cmd:text('Options:')
 cmd:option('-d', '', 'The target dataset folder')
-cmd:option('-o', '', 'The output images folder')
-cmd:option('-skip_frame',  0, "Skip frames per batch")
-cmd:option('-total_epoch', 10, "Trained epoch number")
+cmd:option('-total_iterator', 100000, "Total iterate number")
 cmd:option('-batch_size', 16, "Batch number")
-cmd:option('-bpf', 1, "Batch number per page")
-
 local opt = cmd:parse(arg)
+assert(opt.d ~= '')
+local config = u.loadConfig(opt)
+
+
