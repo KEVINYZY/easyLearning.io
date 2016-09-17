@@ -10,30 +10,20 @@ local loadConfig = function(opt)
 
     -- Computing logo black mask (zero index)
     local longSide = math.max(config.logoWidth, config.logoHeight)
-    --if ( longSide%2 ~= 0 ) then longSide = longSide + 1 end
-    if ( longSide <= 48) then 
-        longSide = 48 
-    elseif ( longSide <= 64) then
-        longSide = 64
-    elseif ( longSide <= 80) then
-        longSide = 80
-    else
-        longSide = -1
-    end
-    assert(longSide > 0)
-    
-    local x = config.logoX - longSide
-    local y = config.logoY - longSide
+    longSide = math.floor((longSide + 7) / 8) * 8.0
+
+    local x = config.logoX - longSide*1.5
+    local y = config.logoY - longSide*1.5
     if ( x < 0 ) then x = 0 end
     if ( y < 0 ) then y = 0 end
     if ( x + longSide*3 > config.imageWidth ) then
-        x = config.imageWidth - longSide*3
+        x = config.imageWidth - longSide*4
     end
     if ( y + longSide*3 > config.imageHeight ) then
-        y = config.imageHeight - longSide*3
+        y = config.imageHeight - longSide*4
     end
-    config.inputWidth = longSide*3
-    config.inputHeight = longSide*3
+    config.inputWidth = longSide*4
+    config.inputHeight = longSide*4
 
     -- mask value is for tensor, so it is one index
     config.maskLeft = config.logoX - x + 1
@@ -43,7 +33,6 @@ local loadConfig = function(opt)
     assert(config.maskTop >= 1)
     assert(config.maskLeft >= 1)
      
-
     return config
 end
 

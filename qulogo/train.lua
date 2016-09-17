@@ -7,8 +7,8 @@ local m = require('./model')
 -- Checking input paramters and load config
 local cmd = torch.CmdLine()
 cmd:text('Options:')
-cmd:option('-d', '', 'The target dataset folder')
-cmd:option('-neck', 128, 'The middle hidden vector')
+cmd:option('-d', 'sohu', 'The target dataset folder')
+cmd:option('-neck', 384, 'The middle hidden vector')
 cmd:option('-total_iterator', 100000, "Total iterate number")
 cmd:option('-batch_size', 16, "Batch number")
 cmd:option('-seed', 1979, "Random seed")
@@ -19,10 +19,16 @@ torch.manualSeed(opt.seed)
 torch.setnumthreads(1)
 torch.setdefaulttensortype('torch.FloatTensor')
 
+-- Checking model input and output size
+--[[
+local x = torch.rand(5, 3, config.inputWidth, config.inputHeight)
+local gen = m.buildGenerator(opt, config)
+local enc = m.buildEncoder(opt, config)
+local disc = m.buildDiscriminator(opt, config)
+local z = enc:forward(x)
+local y = gen:forward(z)
+local v = disc:forward(y)
+print(z:size(), y:size(), v:size())
+--]]
 
-local x = torch.rand(1, 3, config.inputWidth, config.inputHeight)
-local netE = m.buildEncoder(opt, config)
-netE:evaluate();
 
-local y = netE:forward(x)
-print(y:size())
