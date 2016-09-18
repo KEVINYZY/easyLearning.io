@@ -58,9 +58,9 @@ local criterionD = nn.BCECriterion()
 local criterionG = nn.MSECriterion()
 
 -- input and output
-local inputBatch, maskBatch = nil, nil
 local label = torch.Tensor(opt.batch_size)
-local gout = nil 
+local inputBatch, maskBatch = nil, nil
+local outG, outD = nil, nil
 
 --------------------------------
 -- Training discriminator
@@ -71,18 +71,19 @@ local fDx = function(x)
     gradParametersD:zero()
 
     -- training with true
-    label:fill(1);
-    local output = netD:forward(maskBatch)
-    local terror = criterionD:forward(output, label);
-    local dfd = criterionD:backward(output, label);
-    netD:backwoard(maskBatch, dfd)
+    label:fill(1)
+    outD = netD:forward(maskBatch)
+    local terror = criterionD:forward(outputD, label)
+    local dfd = criterionD:backward(outputD, label)
+    netD:backward(maskBatch, dfd)
 
-    -- training with fake
-    label:fill(0);
-    gout = netG:forward(inputBatch)
-    output = netD:fowrad(maskBatch)
-    local ferror = criterionD:forward(output, label);
-    local dfd = criterionD:backward(output, label);
+    -- training with false
+    label:fill(0)
+    outG = netG:forward(inputBatch)
+    outD = netD:fowrad(outG)
+    local ferror = criterionD:forward(outD, label)
+    dfd = criterionD:backward(outD, label)
+    netD:backward(outG, dfd) 
 
     return terror+ferror, gradParametersD
 end
@@ -91,7 +92,24 @@ end
 -- Traning genrator
 --------------------------------
 local fGx = function(x)
+    netD:apply(function(m) if torch.type(m):find('Convolution') then m.bias:zero() end end)
+    netG:apply(function(m) if torch.type(m):find('Convolution') then m.bias:zero() end end)
     gradParametersG:zero()
+   
+    -- traninging with fake true
+    labe:fill(1)
+    local ferror = criterionD:forward(outD, label)
+    local dfd = criterionD:backward(outD, label)
+    local dOutG = netD:updateGradInput(outG, dfd)
+     
+    local l2error = criterionG:forward(outG, maskBatch)
+    local dfg = criterionG:backward(outG, maskBatch)
+    
+    dOutG:add(1.0, dfg) 
+    
+    netG:backward(inputBatch, dOutG)
+    
+    return ferror + l2error, gradParametersG
 end
 
 local doTrain = function()
@@ -104,5 +122,6 @@ local doTrain = function()
     end
 end
 
+inputBatch, maskBatch = data.randomBatch()
 
 
