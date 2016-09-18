@@ -15,7 +15,7 @@ cmd:option('-d', 'sohu', 'The target dataset folder')
 cmd:option('-neck', 384, 'The middle hidden vector')
 cmd:option('-gpu', 1, 'Defaut using GPU 1')
 cmd:option('-total_iterator', 100000, "Total iterate number")
-cmd:option('-batch_size', 12, "Batch number")
+cmd:option('-batch_size', 32, "Batch number")
 cmd:option('-seed', 1979, "Random seed")
 
 local opt = cmd:parse(arg)
@@ -113,11 +113,11 @@ local fGx = function(x)
     local l2error = criterionG:forward(outG, maskBatch)
     local dfg = criterionG:backward(outG, maskBatch)
     
-    dOutG:add(1.0, dfg) 
+    dOutG:add(5.0, dfg) 
     
     netG:backward(inputBatch, dOutG)
     
-    print( ferror + l2error)
+    print( l2error)
     return ferror + l2error, gradParametersG
 end
 

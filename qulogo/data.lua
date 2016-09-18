@@ -4,17 +4,8 @@ require('image')
 local pageIndex = 1
 local patchIndex = 1
 
-local initedRandom = false
-local pageSeq = nil
 local randomBatch = function(opt, config)
-    if ( initedRandom == false) then
-        initedRandom = true
-        pageSeq = torch.randperm(config.totalNumber)
-        pageIndex = 1
-    end
-    
-    local pageNumber = pageSeq[pageIndex]
-    local fileName = opt.d .. "/" .. pageNumber .. ".jpg"
+    local fileName = opt.d .. "/" .. pageIndex .. ".jpg"
     local fullImage = image.loadJPG(fileName)
    
     local batch = torch.Tensor(opt.batch_size, 3, config.inputHeight, config.inputWidth)
@@ -43,9 +34,13 @@ local randomBatch = function(opt, config)
 
     local centerBatch = batch[maskPos]:clone()
     batch[maskPos]:zero()
-    pageIndex = pageIndex + 1
-    if ( pageIndex > config.totalNumber) then
-        pageIndex = 1
+    
+    patchIndex = patchIndex + 1
+    if ( patchIndex > 10) then
+        pageIndex = pageIndex + 1
+        if ( pageIndex > config.totalNumber) then
+            pageIndex = 1
+        end
     end
 
     return batch, centerBatch
