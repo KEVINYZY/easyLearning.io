@@ -1,5 +1,9 @@
 require('torch')
 require('image')
+require('nn')
+require('optim')
+require('xlua')
+
 local util = require('./util')
 local data = require('./data')
 local model = require('./model')
@@ -9,12 +13,17 @@ local cmd = torch.CmdLine()
 cmd:text('Options:')
 cmd:option('-d', 'sohu', 'The target dataset folder')
 cmd:option('-neck', 384, 'The middle hidden vector')
+cmd:option('-gpu', 1, 'Defaut using GPU 1')
 cmd:option('-total_iterator', 100000, "Total iterate number")
-cmd:option('-batch_size', 4, "Batch number")
+cmd:option('-batch_size', 12, "Batch number")
 cmd:option('-seed', 1979, "Random seed")
 
 local opt = cmd:parse(arg)
 local config = util.loadConfig(opt)
+if (opt.gpu ~= 0) then
+    require('cunn')
+end
+
 torch.manualSeed(opt.seed)
 torch.setnumthreads(1)
 torch.setdefaulttensortype('torch.FloatTensor')
@@ -43,12 +52,10 @@ local parametersG, gradParametersG = netG:getParameters()
 
 -- optim
 local optimStateG = {
-    learningRate = 0.001,
-    beta1 = opt.beta1,
+    learningRate = 0.0001,
 }
 local optimStateD = {
     learningRate = 0.0001,
-    beta1 = opt.beta1,
 }
 local optimG = optim.adam
 local optimD = optim.adam
@@ -73,18 +80,19 @@ local fDx = function(x)
     -- training with true
     label:fill(1)
     outD = netD:forward(maskBatch)
-    local terror = criterionD:forward(outputD, label)
-    local dfd = criterionD:backward(outputD, label)
+    local terror = criterionD:forward(outD, label)
+    local dfd = criterionD:backward(outD, label)
     netD:backward(maskBatch, dfd)
 
     -- training with false
     label:fill(0)
     outG = netG:forward(inputBatch)
-    outD = netD:fowrad(outG)
+    outD = netD:forward(outG)
     local ferror = criterionD:forward(outD, label)
     dfd = criterionD:backward(outD, label)
     netD:backward(outG, dfd) 
-
+    
+    --print( terror, ferror)
     return terror+ferror, gradParametersD
 end
 
@@ -97,7 +105,7 @@ local fGx = function(x)
     gradParametersG:zero()
    
     -- traninging with fake true
-    labe:fill(1)
+    label:fill(1)
     local ferror = criterionD:forward(outD, label)
     local dfd = criterionD:backward(outD, label)
     local dOutG = netD:updateGradInput(outG, dfd)
@@ -109,19 +117,41 @@ local fGx = function(x)
     
     netG:backward(inputBatch, dOutG)
     
+    print( ferror + l2error)
     return ferror + l2error, gradParametersG
 end
 
 local doTrain = function()
+    if ( opt.gpu ~= 0) then
+        netG:cuda()
+        netD:cuda()
+        criterionD:cuda()
+        criterionG:cuda()
+        label = label:cuda()
+        parametersD, gradParametersD = netD:getParameters()
+        parametersG, gradParametersG = netG:getParameters()
+    end
+
+    netG:training()
+    netD:training()
+
     for i = 1, opt.total_iterator do
-        netG:training()
-        netD:training()
-        inputBatch, maskBatch = data.randomBatch()
-        
+        inputBatch, maskBatch = data.randomBatch(opt, config)
+        if ( opt.gpu ~= 0) then
+            inputBatch = inputBatch:cuda()
+            maskBatch = maskBatch:cuda()
+        end
+     
+        -- (1) Update D network: maximize log(D(x)) + log(1 - D(G(z)))
+        optimD(fDx, parametersD, optimStateD)
+
+        -- (2) Update G network: maximize log(D(G(z)))
+        optimG(fGx, parametersG, optimStateG)
+
         collectgarbage() 
+        xlua.progress(i, opt.total_iterator)
     end
 end
 
-inputBatch, maskBatch = data.randomBatch()
-
+doTrain()
 

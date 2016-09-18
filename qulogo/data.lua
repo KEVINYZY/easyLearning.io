@@ -43,6 +43,10 @@ local randomBatch = function(opt, config)
 
     local centerBatch = batch[maskPos]:clone()
     batch[maskPos]:zero()
+    pageIndex = pageIndex + 1
+    if ( pageIndex > config.totalNumber) then
+        pageIndex = 1
+    end
 
     return batch, centerBatch
 end
