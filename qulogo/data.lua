@@ -1,10 +1,7 @@
 require('torch')
 require('image')
 
-local pageIndex = 1
-local patchIndex = 1
-
-local randomBatch = function(opt, config)
+local randomBatch = function(opt, config, pageIndex)
     local fileName = opt.d .. "/" .. pageIndex .. ".jpg"
     local fullImage = image.loadJPG(fileName)
    
@@ -35,14 +32,6 @@ local randomBatch = function(opt, config)
     local centerBatch = batch[maskPos]:clone()
     batch[maskPos]:zero()
     
-    patchIndex = patchIndex + 1
-    if ( patchIndex > 10) then
-        pageIndex = pageIndex + 1
-        if ( pageIndex > config.totalNumber) then
-            pageIndex = 1
-        end
-    end
-
     return batch, centerBatch
 end
 

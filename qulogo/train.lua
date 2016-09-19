@@ -12,11 +12,11 @@ local model = require('./model')
 local cmd = torch.CmdLine()
 cmd:text('Options:')
 cmd:option('-d', 'sohu', 'The target dataset folder')
-cmd:option('-neck', 384, 'The middle hidden vector')
+cmd:option('-neck', 1024, 'The middle hidden vector')
 cmd:option('-gpu', 1, 'Defaut using GPU 1')
-cmd:option('-total_iterator', 100000, "Total iterate number")
-cmd:option('-batch_size', 32, "Batch number")
+cmd:option('-batch_size', 64, "Batch number")
 cmd:option('-seed', 1979, "Random seed")
+cmd:option('-threshold', 0.10, "Inpainting threshold")
 
 local opt = cmd:parse(arg)
 local config = util.loadConfig(opt)
@@ -51,14 +51,14 @@ local parametersD, gradParametersD = netD:getParameters()
 local parametersG, gradParametersG = netG:getParameters()
 
 -- optim
+local optimG = optim.adam
+local optimD = optim.adam
 local optimStateG = {
-    learningRate = 0.0001,
+    learningRate = 0.001,
 }
 local optimStateD = {
     learningRate = 0.0001,
 }
-local optimG = optim.adam
-local optimD = optim.adam
 
 -- loss
 local criterionD = nn.BCECriterion()
@@ -73,8 +73,8 @@ local outG, outD = nil, nil
 -- Training discriminator
 --------------------------------
 local fDx = function(x) 
-    netD:apply(function(m) if torch.type(m):find('Convolution') then m.bias:zero() end end)
-    netG:apply(function(m) if torch.type(m):find('Convolution') then m.bias:zero() end end)
+    --netD:apply(function(m) if torch.type(m):find('Convolution') then m.bias:zero() end end)
+    --netG:apply(function(m) if torch.type(m):find('Convolution') then m.bias:zero() end end)
     gradParametersD:zero()
 
     -- training with true
@@ -91,8 +91,8 @@ local fDx = function(x)
     local ferror = criterionD:forward(outD, label)
     dfd = criterionD:backward(outD, label)
     netD:backward(outG, dfd) 
-    
-    --print( terror, ferror)
+   
+    print("D error = " .. (terror + ferror) )
     return terror+ferror, gradParametersD
 end
 
@@ -100,8 +100,8 @@ end
 -- Traning genrator
 --------------------------------
 local fGx = function(x)
-    netD:apply(function(m) if torch.type(m):find('Convolution') then m.bias:zero() end end)
-    netG:apply(function(m) if torch.type(m):find('Convolution') then m.bias:zero() end end)
+    --netD:apply(function(m) if torch.type(m):find('Convolution') then m.bias:zero() end end)
+    --netG:apply(function(m) if torch.type(m):find('Convolution') then m.bias:zero() end end)
     gradParametersG:zero()
    
     -- traninging with fake true
@@ -113,11 +113,10 @@ local fGx = function(x)
     local l2error = criterionG:forward(outG, maskBatch)
     local dfg = criterionG:backward(outG, maskBatch)
     
-    dOutG:add(5.0, dfg) 
-    
+    dOutG:add(0.1, dfg) 
     netG:backward(inputBatch, dOutG)
-    
-    print( l2error)
+   
+    print("L2 error:" .. l2error .. " FG error:" .. ferror)
     return ferror + l2error, gradParametersG
 end
 
@@ -134,9 +133,10 @@ local doTrain = function()
 
     netG:training()
     netD:training()
-
-    for i = 1, opt.total_iterator do
-        inputBatch, maskBatch = data.randomBatch(opt, config)
+    
+    pageIndex = 1
+    for i = 1, config.totalNumber do
+        inputBatch, maskBatch = data.randomBatch(opt, config, pageIndex)
         if ( opt.gpu ~= 0) then
             inputBatch = inputBatch:cuda()
             maskBatch = maskBatch:cuda()
@@ -149,7 +149,9 @@ local doTrain = function()
         optimG(fGx, parametersG, optimStateG)
 
         collectgarbage() 
-        xlua.progress(i, opt.total_iterator)
+
+        print("..................")
+        --xlua.progress(i, opt.total_iterator)
     end
 end
 
