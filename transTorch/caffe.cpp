@@ -6,12 +6,13 @@
 
 extern "C"
 {
-void loadCaffe(void* handle[1], const char* param_file, const char* model_file, const char* phase);
+void* loadCaffeNet(const char* param_file, const char* model_file, const char* phase);
+void releaseCaffeNet(void* net_);
 }
 
 using namespace caffe;  // NOLINT(build/namespaces)
 
-void loadCaffe(void** handle, const char* param_file, const char* model_file, const char* phase_name) {
+void* loadCaffeNet(const char* param_file, const char* model_file, const char* phase_name) {
   Phase phase;
   if (strcmp(phase_name, "train") == 0) {
     phase = TRAIN;
@@ -20,10 +21,23 @@ void loadCaffe(void** handle, const char* param_file, const char* model_file, co
   } else {
     THError("Unknown phase.");
   }
-  Net<float>* net_ = new Net<float>(string(param_file), phase);
-  if(model_file != NULL)
-    net_->CopyTrainedLayersFrom(string(model_file));
 
-  *handle = net_;
+  Net<float>* net = new Net<float>(string(param_file), phase);
+  if(model_file != NULL)
+    net->CopyTrainedLayersFrom(string(model_file));
+
+  return net;
+}
+
+void releaseCaffeNet(void* net_) {
+    Net<float>* net = (Net<float>*)net_;
+
+    if ( net != NULL) {
+        delete net;
+    }
+}
+
+void writeCaffeLinearLayer(void* net, const char* layerName, THFloatTensor* weights, THFloatTensor* bias) {
+
 }
 
