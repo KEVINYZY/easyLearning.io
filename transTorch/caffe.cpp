@@ -10,6 +10,9 @@ void* loadCaffeNet(const char* param_file, const char* model_file, const char* p
 void releaseCaffeNet(void* net_);
 }
 
+
+typedef float Dtype;
+
 using namespace caffe;  // NOLINT(build/namespaces)
 
 void* loadCaffeNet(const char* param_file, const char* model_file, const char* phase_name) {
@@ -22,7 +25,7 @@ void* loadCaffeNet(const char* param_file, const char* model_file, const char* p
     THError("Unknown phase.");
   }
 
-  Net<float>* net = new Net<float>(string(param_file), phase);
+  Net<Dtype>* net = new Net<Dtype>(string(param_file), phase);
   if(model_file != NULL)
     net->CopyTrainedLayersFrom(string(model_file));
 
@@ -30,14 +33,18 @@ void* loadCaffeNet(const char* param_file, const char* model_file, const char* p
 }
 
 void releaseCaffeNet(void* net_) {
-    Net<float>* net = (Net<float>*)net_;
+    Net<Dtype>* net = (Net<Dtype>*)net_;
 
     if ( net != NULL) {
         delete net;
     }
 }
 
-void writeCaffeLinearLayer(void* net, const char* layerName, THFloatTensor* weights, THFloatTensor* bias) {
+void writeCaffeLinearLayer(void* net_, const char* layerName, THFloatTensor* weights, THFloatTensor* bias) {
+    Net<Dtype>* net = (Net<Dtype>*)net_;
+    const boost::shared_ptr<caffe::Layer<Dtype> > inLayer = net->layer_by_name("conv1_1");
+    vector<shared_ptr<Blob<Dtype> > > blobs = inLayer->blobs();
 
+    std::cout << "############" << blobs.size() << std::endl;
 }
 
