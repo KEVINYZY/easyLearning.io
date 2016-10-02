@@ -34,3 +34,4 @@ int main(int argc, char** argv) {
   net->ToProto(&net_param);
   WriteProtoToBinaryFile(net_param, weight_file);
 }
+

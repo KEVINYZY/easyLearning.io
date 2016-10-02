@@ -13,13 +13,22 @@ transTorch.loadCaffe = function(prototxt_name, binary_name, phase_name)
 end
 
 transTorch.toCaffe = function(tmodel, caffeNet, layerName)
-    if ( torch.type(tmodel) == 'nn.Linear' ) then
+    local mtype = torch.type(tmodel)
+    if ( mtype == 'nn.Linear' ) then
         toLinear(tmodel, caffeNet, layerName)
+    elseif ( mtype == 'nn.BatchNormalization' or mtype == 'nn.SpatialBatchNormalization' ) then
+        toBatchNorm(tmodel, caffeNet, layerName)
+    elseif ( string.match(mtype, 'Convolution') ) then
+        toConv(tmodel, caffeNet, layerName)
     end
 end
 
 transTorch.releaseCaffe = function(net) 
     C.releaseCaffeNet(net[0]);
+end
+
+transTorch.writeCaffe = function(net, fileName)
+    C.saveCaffeNet(net, fileName);
 end
 
 local toLinear = function(tm, caffeNet, layerName) 
@@ -28,3 +37,12 @@ local toLinear = function(tm, caffeNet, layerName)
     local bias = tm.bias:cdata()
     C.writeCaffeLinearLayer(caffeNet[0], layerName, weights, bias)
 end
+
+local toConv = function(tm, caffeNet, layerName)
+    assert(tm.weight:type() == 'torch.FloatTensor')
+    local weights = tm.weight:cdata()
+    local bias = tm.bias:cdata()
+    C.writeCaffeLinearLayer(caffeNet[0], layerName, weights, bias)
+end
+
+
