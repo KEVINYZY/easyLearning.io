@@ -45,4 +45,3 @@ local toConv = function(tm, caffeNet, layerName)
     C.writeCaffeLinearLayer(caffeNet[0], layerName, weights, bias)
 end
 
-

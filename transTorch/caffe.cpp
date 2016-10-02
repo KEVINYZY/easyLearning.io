@@ -65,6 +65,29 @@ void writeCaffeBNLayer(void* net_, const char* layerName,
     const boost::shared_ptr<caffe::Layer<Dtype> > inLayer = net->layer_by_name(std::string(layerName));
     vector<shared_ptr<Blob<Dtype> > > blobs = inLayer->blobs();
 
+    // Checking size
+    CHECK_EQ(blobs.size(), 3);
+    unsigned int channel_size = weights->size[0] * weights->size[1] * weights->size[2] * weights->size[3];
+    CHECK_EQ(channel_size, blobs[0]->count());
+
+    // Converting 4 parameter(Torch) to 3 parameter(Caffe)
+    const float* gamma_ptr = THFloatTensor_data(weights);
+    const float* beta_ptr = THFloatTensor_data(bias);
+    const float* mean_ptr = THFloatTensor_data(mean);
+    const float* var_ptr = THFloatTensor_data(var);
+
+    float* blob0_ptr = blobs[0]->mutable_cpu_data();
+    float* blob1_ptr = blobs[1]->mutable_cpu_data();
+    float* blob2_ptr = blogs[2]->mutable_cpu_data();
+
+    // TODO
+#if 0
+    for(int i = 0; i < channel_size; i++) {
+        // y = gamme * ( x - mean) / var + beta
+        //   = gamme * ( x - mean) / var + beta * var / var
+        //   = gamme * ( x - mean + beta * var / gamme) / var
+    }
+#endif
 
 }
 

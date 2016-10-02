@@ -10,8 +10,7 @@ void writecaffelinearlayer(void* net, const char* layername, thfloattensor* weig
 void writecaffebnlayer(void* net, const char* layername, 
                        thfloattensor* weights, thfloattensor* bias, 
                        thfloattensor* mean, thfloattensor* var);
- 
-                       
+
 ]]
 
 transTorch._C = ffi.load(package.searchpath('libtrans_torch', package.cpath))
