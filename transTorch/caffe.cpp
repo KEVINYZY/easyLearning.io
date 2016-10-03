@@ -48,6 +48,14 @@ void saveCaffeNet(void* net_, const char* weight_file) {
     WriteProtoToBinaryFile(net_param, std::string(weight_file));
 }
 
+int getTHTensorSize(THFloatTensor* tensor) {
+    int size = tensor->size[0];
+    for (int i = 1; i < tensor->nDimension; i++) {
+        size = size *  tensor->size[i];
+    }
+    return size;
+}
+
 void writeCaffeBNLayer(void* net_, const char* layerName,
                        THFloatTensor* weights, THFloatTensor* bias,
                        THFloatTensor* mean, THFloatTensor* var) {
@@ -96,11 +104,8 @@ void writeCaffeConvLayer(void* net_, const char* layerName, THFloatTensor* weigh
     }
 
     // Checking size
-    unsigned int th_weights_size = weights->size[0] * weights->size[1] * weights->size[2] * weights->size[3];
-    CHECK_EQ(th_weights_size, blobs[0]->count());
-
-    unsigned int th_bias_size = bias->size[0] * bias->size[1] * bias->size[2] * bias->size[3];
-    CHECK_EQ(th_bias_size, blobs[1]->count());
+    CHECK_EQ(getTHTensorSize(weights), blobs[0]->count());
+    CHECK_EQ(getTHTensorSize(bias), blobs[1]->count());
 
     // Copying data
     const float* data_ptr = THFloatTensor_data(weights);

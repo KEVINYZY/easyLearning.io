@@ -17,7 +17,9 @@ end
 
 transTorch.loadCaffe = function(prototxt_name, binary_name) 
     assert(type(prototxt_name) == 'string')
-    --assert(type(binary_name) == 'string')
+    if ( binary_name ~= nil ) then
+        assert(type(binary_name) == 'string')
+    end
     
     local net = ffi.new("void*[1]")  
     net[0] = C.loadCaffeNet(prototxt_name, binary_name) 
