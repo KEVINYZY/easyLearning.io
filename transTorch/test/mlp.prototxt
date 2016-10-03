@@ -53,9 +53,3 @@ layer {
     }
   }
 }
-layer {
-  name: "prob"
-  type: "Softmax"
-  bottom: "ip2"
-  top: "prob"
-}

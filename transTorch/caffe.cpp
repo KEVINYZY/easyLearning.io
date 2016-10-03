@@ -13,11 +13,11 @@ void* loadCaffeNet(const char* param_file, const char* model_file, const char* p
 void releaseCaffeNet(void* net_);
 void saveCaffeNet(void* net_, const char* weight_file);
 
-void writecaffeconvlayer(void* net, const char* layername, thfloattensor* weights, thfloattensor* bias);
-void writecaffelinearlayer(void* net, const char* layername, thfloattensor* weights, thfloattensor* bias);
-void writecaffebnlayer(void* net, const char* layername,
-                       thfloattensor* weights, thfloattensor* bias,
-                       thfloattensor* mean, thfloattensor* var);
+void writeCaffeConvLayer(void* net, const char* layername, THFloatTensor* weights, THFloatTensor* bias);
+void writeCaffeLinearLayer(void* net, const char* layername, THFloatTensor* weights, THFloatTensor* bias);
+void writeCaffeBNLayer(void* net, const char* layername,
+                       THFloatTensor* weights, THFloatTensor* bias,
+                       THFloatTensor* mean, THFloatTensor* var);
 }
 
 typedef float Dtype;
@@ -78,7 +78,7 @@ void writeCaffeBNLayer(void* net_, const char* layerName,
 
     float* blob0_ptr = blobs[0]->mutable_cpu_data();
     float* blob1_ptr = blobs[1]->mutable_cpu_data();
-    float* blob2_ptr = blogs[2]->mutable_cpu_data();
+    float* blob2_ptr = blobs[2]->mutable_cpu_data();
 
     // TODO
 #if 0
@@ -91,7 +91,7 @@ void writeCaffeBNLayer(void* net_, const char* layerName,
 
 }
 
-void writeCaffeConvLayer(void* net, const char* layerName, THFloatTensor* weights, THFloatTensor* bias) {
+void writeCaffeConvLayer(void* net_, const char* layerName, THFloatTensor* weights, THFloatTensor* bias) {
     Net<Dtype>* net = (Net<Dtype>*)net_;
 
     const boost::shared_ptr<caffe::Layer<Dtype> > inLayer = net->layer_by_name(std::string(layerName));
@@ -133,10 +133,10 @@ void writeCaffeLinearLayer(void* net_, const char* layerName, THFloatTensor* wei
     }
 
     // Checking size
-    unsigned int th_weights_size = weights->size[0] * weights->size[1] * weights->size[2] * weights->size[3];
+    unsigned int th_weights_size = weights->size[0] * weights->size[1];
     CHECK_EQ(th_weights_size, blobs[0]->count());
 
-    unsigned int th_bias_size = bias->size[0] * bias->size[1] * bias->size[2] * bias->size[3];
+    unsigned int th_bias_size = bias->size[0];
     CHECK_EQ(th_bias_size, blobs[1]->count());
 
     // Copying data
