@@ -9,7 +9,7 @@
 
 extern "C"
 {
-void* loadCaffeNet(const char* param_file, const char* model_file, const char* phase);
+void* loadCaffeNet(const char* param_file, const char* model_file);
 void releaseCaffeNet(void* net_);
 void saveCaffeNet(void* net_, const char* weight_file);
 
@@ -24,17 +24,8 @@ typedef float Dtype;
 
 using namespace caffe;  // NOLINT(build/namespaces)
 
-void* loadCaffeNet(const char* param_file, const char* model_file, const char* phase_name) {
-  Phase phase;
-  if (strcmp(phase_name, "train") == 0) {
-    phase = TRAIN;
-  } else if (strcmp(phase_name, "test") == 0) {
-    phase = TEST;
-  } else {
-    THError("Unknown phase.");
-  }
-
-  Net<Dtype>* net = new Net<Dtype>(string(param_file), phase);
+void* loadCaffeNet(const char* param_file, const char* model_file) {
+  Net<Dtype>* net = new Net<Dtype>(string(param_file), TEST);
   if(model_file != NULL)
     net->CopyTrainedLayersFrom(string(model_file));
 

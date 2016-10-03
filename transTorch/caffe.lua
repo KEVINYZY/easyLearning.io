@@ -15,13 +15,12 @@ local toConv = function(tm, caffeNet, layerName)
     C.writeCaffeLinearLayer(caffeNet[0], layerName, weights, bias)
 end
 
-transTorch.loadCaffe = function(prototxt_name, binary_name, phase_name) 
+transTorch.loadCaffe = function(prototxt_name, binary_name) 
     assert(type(prototxt_name) == 'string')
-    assert(type(binary_name) == 'string')
-    assert(type(phase_name) == 'string')
+    --assert(type(binary_name) == 'string')
     
     local net = ffi.new("void*[1]")  
-    net[0] = C.loadCaffeNet(prototxt_name, binary_name, phase_name)
+    net[0] = C.loadCaffeNet(prototxt_name, binary_name) 
     
     return net
 end

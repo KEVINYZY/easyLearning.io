@@ -1,7 +1,7 @@
 local ffi = require 'ffi'
 
 ffi.cdef[[
-void* loadCaffeNet(const char* param_file, const char* model_file, const char* phase_name);
+void* loadCaffeNet(const char* param_file, const char* model_file);
 void releaseCaffeNet(void* net);
 void saveCaffeNet(void* net_, const char* weight_file);
 
