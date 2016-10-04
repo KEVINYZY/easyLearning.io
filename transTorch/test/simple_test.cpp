@@ -33,20 +33,18 @@ int main(int argc, char** argv) {
 
   const boost::shared_ptr<Blob<Dtype> > inBlob = net->blob_by_name("data");
   Dtype* result = (Dtype*)(inBlob->cpu_data() + inBlob->offset(0));
-  for (int h = 0; h < inBlob->height(); h++) {
-    for (int w = 0; w < inBlob->width(); w++) {
-        result[h * inBlob->width() + w] = 0.5;
-    }
+
+  for (int i = 0; i < inBlob->count(); i++) {
+    result[i] = 0.5;
   }
 
   net->Forward();
 
   const boost::shared_ptr<Blob<Dtype> > outBlob = net->blob_by_name("prob");
   result = (Dtype*)(outBlob->cpu_data() + outBlob->offset(0));
-  for (int h = 0; h < outBlob->height(); h++) {
-    for (int w = 0; w < outBlob->width(); w++) {
-        std::cout << result[h * inBlob->width() + w] << " ";
-    }
-    std::cout << std::endl;
+
+  for (int i = 0; i < outBlob->count(); i++) {
+      std::cout << result[i] << " ";
   }
+  std::cout << std::endl;
 }

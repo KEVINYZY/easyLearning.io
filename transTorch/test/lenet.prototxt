@@ -3,7 +3,14 @@ layer {
   name: "data"
   type: "Input"
   top: "data"
-  input_param { shape: { dim: 64 dim: 1 dim: 28 dim: 28 } }
+  input_param { 
+    shape: { 
+        dim: 1
+        dim: 1
+        dim: 28 
+        dim: 28 
+    } 
+  }
 }
 layer {
   name: "conv1"
@@ -51,7 +58,7 @@ layer {
     lr_mult: 2
   }
   convolution_param {
-    num_output: 50
+    num_output: 50 
     kernel_size: 5
     stride: 1
     weight_filler {
