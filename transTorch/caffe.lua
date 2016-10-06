@@ -15,6 +15,24 @@ local toConv = function(tm, caffeNet, layerName)
     C.writeCaffeLinearLayer(caffeNet[0], layerName, weights, bias)
 end
 
+local toBatchNorm = function(tm, caffeNet, layerName)
+    if ( tm.affine == true) then
+        assert(type(layerName) == 'table')
+        assert(#layerName == 2)
+        local weights = tm.weight:cdata()
+        local bias = tm.bias:cdata()
+        local mean = tm.running_mean:cdata()
+        local var = tm.running_var:cdata()
+        C.writeCaffeBNLayer(caffeNet[0], layerName[1], mean, var);
+        C.writeCaffeScaleLayer(caffeNet[0], layerName[2], weights, bias);
+    else
+        assert(type(layerName) == 'string')
+        local mean = tm.running_mean:cdata()
+        local var = tm.running_var:cdata()
+        C.writeCaffeBNLayer(caffeNet[0], layerName[0], mean, var);
+    end
+end
+
 transTorch.loadCaffe = function(prototxt_name, binary_name) 
     assert(type(prototxt_name) == 'string')
     if ( binary_name ~= nil ) then

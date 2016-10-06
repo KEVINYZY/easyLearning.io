@@ -15,9 +15,8 @@ void saveCaffeNet(void* net_, const char* weight_file);
 
 void writeCaffeConvLayer(void* net, const char* layername, THFloatTensor* weights, THFloatTensor* bias);
 void writeCaffeLinearLayer(void* net, const char* layername, THFloatTensor* weights, THFloatTensor* bias);
-void writeCaffeBNLayer(void* net, const char* layername,
-                       THFloatTensor* weights, THFloatTensor* bias,
-                       THFloatTensor* mean, THFloatTensor* var);
+void writeCaffeBNLayer(void* net, const char* layername, THFloatTensor* mean, THFloatTensor* var);
+void writeCaffeScaleLayer(void* net, const char* layername, THFloatTensor* weights, THFloatTensor* bias);
 }
 
 typedef float Dtype;
@@ -56,38 +55,42 @@ int getTHTensorSize(THFloatTensor* tensor) {
     return size;
 }
 
-void writeCaffeBNLayer(void* net_, const char* layerName,
-                       THFloatTensor* weights, THFloatTensor* bias,
-                       THFloatTensor* mean, THFloatTensor* var) {
-     Net<Dtype>* net = (Net<Dtype>*)net_;
+void writeCaffeBNLayer(void* net_, const char* layerName, THFloatTensor* mean, THFloatTensor* var) {
+    Net<Dtype>* net = (Net<Dtype>*)net_;
 
     const boost::shared_ptr<caffe::Layer<Dtype> > inLayer = net->layer_by_name(std::string(layerName));
     vector<shared_ptr<Blob<Dtype> > > blobs = inLayer->blobs();
 
     // Checking size
     CHECK_EQ(blobs.size(), 3);
-    unsigned int channel_size = weights->size[0] * weights->size[1] * weights->size[2] * weights->size[3];
-    CHECK_EQ(channel_size, blobs[0]->count());
+    CHECK_EQ(getTHTensorSize(mean), blobs[0]->count());
 
-    // Converting 4 parameter(Torch) to 3 parameter(Caffe)
-    const float* gamma_ptr = THFloatTensor_data(weights);
-    const float* beta_ptr = THFloatTensor_data(bias);
+    // Converting 2 parameter(Torch) to 3 parameter(Caffe)
     const float* mean_ptr = THFloatTensor_data(mean);
     const float* var_ptr = THFloatTensor_data(var);
 
-    float* blob0_ptr = blobs[0]->mutable_cpu_data();
-    float* blob1_ptr = blobs[1]->mutable_cpu_data();
-    float* blob2_ptr = blobs[2]->mutable_cpu_data();
+    caffe_set(blobs[2]->count(), 1.0f, blobs[2]->mutable_cpu_data());
+    caffe_copy(blobs[0]->count(), mean_ptr, blobs[0]->mutable_cpu_data());
+    caffe_copy(blobs[1]->count(), var_ptr, blobs[1]->mutable_cpu_data());
+}
 
-    // TODO
-#if 0
-    for(int i = 0; i < channel_size; i++) {
-        // y = gamme * ( x - mean) / var + beta
-        //   = gamme * ( x - mean) / var + beta * var / var
-        //   = gamme * ( x - mean + beta * var / gamme) / var
-    }
-#endif
 
+void writeCaffeScaleLayer(void* net_, const char* layerName, THFloatTensor* weights, THFloatTensor* bias) {
+    Net<Dtype>* net = (Net<Dtype>*)net_;
+
+    const boost::shared_ptr<caffe::Layer<Dtype> > inLayer = net->layer_by_name(std::string(layerName));
+    vector<shared_ptr<Blob<Dtype> > > blobs = inLayer->blobs();
+
+    // Checking size
+    CHECK_EQ(blobs.size(), 2);
+    CHECK_EQ(getTHTensorSize(weights), blobs[0]->count());
+
+    // Copying data
+    const float* data_ptr = THFloatTensor_data(weights);
+    caffe_copy(blobs[0]->count(), data_ptr, blobs[0]->mutable_cpu_data());
+
+    data_ptr = THFloatTensor_data(bias);
+    caffe_copy(blobs[1]->count(), data_ptr, blobs[1]->mutable_cpu_data());
 }
 
 void writeCaffeConvLayer(void* net_, const char* layerName, THFloatTensor* weights, THFloatTensor* bias) {

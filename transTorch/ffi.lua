@@ -7,10 +7,8 @@ void saveCaffeNet(void* net_, const char* weight_file);
 
 void writeCaffeLinearLayer(void* net, const char* layername, THFloatTensor* weights, THFloatTensor* bias); 
 void writeCaffeConvLayer(void* net, const char* layername, THFloatTensor* weights, THFloatTensor* bias); 
-void writeCaffeBNlayer(void* net, const char* layername, 
-                       THFloatTensor* weights, THFloatTensor* bias, 
-                       THFloatTensor* mean, THFloatTensor* var);
-
+void writeCaffeBNLayer(void* net, const char* layername, THFloatTensor* mean, THFloatTensor* var);
+void writeCaffeScaleLayer(void* net, const char* layername, THFloatTensor* weights, THFloatTensor* bias);
 ]]
 
 transTorch._C = ffi.load(package.searchpath('libtrans_torch', package.cpath))
