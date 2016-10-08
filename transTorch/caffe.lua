@@ -12,7 +12,7 @@ local toConv = function(tm, caffeNet, layerName)
     assert(tm.weight:type() == 'torch.FloatTensor')
     local weights = tm.weight:cdata()
     local bias = tm.bias:cdata()
-    C.writeCaffeLinearLayer(caffeNet[0], layerName, weights, bias)
+    C.writeCaffeConvLayer(caffeNet[0], layerName, weights, bias)
 end
 
 local toBatchNorm = function(tm, caffeNet, layerName)
