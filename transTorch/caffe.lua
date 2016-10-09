@@ -61,6 +61,9 @@ transTorch.toCaffe = function(tmodel, caffeNet, layerName)
         toBatchNorm(tmodel, caffeNet, layerName)
     elseif ( string.match(mtype, 'Convolution') ) then
         toConv(tmodel, caffeNet, layerName)
+    else
+        print(" ##ERROR## unspported layer:" .. mtype)
+        assert(false)
     end
 end
 

@@ -1,1 +1,1 @@
-CAFFE_DIR=~/workspace/caffe-ssd-teaonly luarocks make
+CAFFE_DIR=/home/zhouchang.zc/workspace/caffe-ssd luarocks make

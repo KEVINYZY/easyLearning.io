@@ -18,7 +18,9 @@ IF(NOT EXISTS ${CAFFE_DIR})
 ENDIF()
 MESSAGE("CAFFE_DIR: " ${CAFFE_DIR})
 
-INCLUDE_DIRECTORIES("${Torch_INSTALL_INCLUDE}/TH" "${CAFFE_DIR}/include" "${CAFFE_DIR}/build/src" ${CUDA_INCLUDE_DIRS})
+SET(OPT_DIR "~/opt")
+
+INCLUDE_DIRECTORIES("${Torch_INSTALL_INCLUDE}/TH" "${CAFFE_DIR}/include" "${CAFFE_DIR}/build/src" ${CUDA_INCLUDE_DIRS} "${OPT_DIR}/include")
 
 LINK_DIRECTORIES("${Torch_INSTALL_LIB}" "${CAFFE_DIR}/build/lib")
 add_definitions(-Wl,-as-needed)
@@ -27,8 +29,8 @@ SET(src caffe.cpp ${PROTO_SRCS})
 
 FILE(GLOB luasrc *.lua)
 
-ADD_LIBRARY(trans_torch MODULE ${src})
-TARGET_LINK_LIBRARIES(trans_torch TH caffe glog)
+ADD_LIBRARY(trans_torch MODULE ${src} "${OPT_DIR}/lib")
+TARGET_LINK_LIBRARIES(trans_torch TH caffe)
 
 ### Torch packages supposes libraries prefix is "lib"
 SET_TARGET_PROPERTIES(trans_torch PROPERTIES
