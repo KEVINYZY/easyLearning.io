@@ -38,13 +38,27 @@ for i = 1, #allBoxes do
     boxLoc:add(nn.SpatialConvolution(1024,  4, allBoxes[i][1], allBoxes[i][2], 1, 1, 0, 0))
     mbox:add(boxLoc)
 end
-
 featureCNN:add(mbox)
 
+local getSize = function(imageWidth, imageHeight) 
+    local targetWidth = math.floor(imageWidth/32) 
+    local targetHeight = math.floor(iamgeHeight/32)
+    
+    return {targetWidth, targetHeight};
+end
+
+--[[
 fixedCNN:cuda()
 featureCNN:cuda()
 local x = torch.rand(4, 3,256,256):cuda()
 local y = featureCNN:forward( fixedCNN:forward(x) )
 print(y)
+--]]
 
-return {allBoxes, fixedCNN, featureCNN}
+local model = {}
+model.fixedCNN = fixedCNN
+model.featureCNN = featureCNN
+model.boxes = allBoxes
+model.getSize = getSize
+
+return model
