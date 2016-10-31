@@ -4,6 +4,8 @@ require('image')
 
 torch.setdefaulttensortype('torch.FloatTensor')
 
+local classNumber = 21
+
 local fixedCNN = torch.load('fixedCNN.t7');
 fixedCNN:evaluate()
 
@@ -30,7 +32,7 @@ local allBoxes = { {2,2}, {3,3}, {4,4}, {5,5}, {6,6}, {7,7},
 
 for i = 1, #allBoxes do
     local boxConf = nn.Sequential()
-    boxConf:add(nn.SpatialConvolution(1024, 21, allBoxes[i][1], allBoxes[i][2], 1, 1, 0, 0))
+    boxConf:add(nn.SpatialConvolution(1024, classNumber, allBoxes[i][1], allBoxes[i][2], 1, 1, 0, 0))
     boxConf:add(nn.SpatialLogSoftMax())
     mbox:add(boxConf)
  
@@ -58,6 +60,7 @@ print(y)
 local model = {}
 model.fixedCNN = fixedCNN
 model.featureCNN = featureCNN
+model.classNumber = classNumber
 model.boxes = allBoxes
 model.getSize = getSize
 
