@@ -1,12 +1,6 @@
 require('torch')
 require('image')
 
-local batchSize = 48
-local typicalSize = 40      -- work with unblanced labeling
-
-local targetWidth = 224
-local targetHeight = 224
-
 torch.setdefaulttensortype('torch.FloatTensor')
 local dataProcessor = {}
 
@@ -20,92 +14,13 @@ local img2caffe = function(img)
 end
 
 dataProcessor._init = function()
-    local self = dataProcessor
     
-    self.otherNumber = #self.otherSamples
-    self.perm_o = torch.randperm(self.otherNumber)
-    self.pos_o = 1
-    
-    self.typicalNumber = #self.typicalSamples 
-    self.perm_t = torch.randperm(self.typicalNumber)
-    self.pos_t = 1
-
-    self.verifyNumber = #self.verifySamples
-    self.perm_v = torch.randperm(self.verifyNumber)
-    self.pos_v = 1
-end
-
-dataProcessor.doVerifySampling = function() 
-    local self = dataProcessor
-    local xBatch = torch.Tensor(batchSize, 3, targetHeight, targetWidth)
-    local yBatch = {}
-    for i=1,4 do
-        table.insert(yBatch, torch.Tensor(batchSize))
-    end
-
-    for i=1,batchSize do
-        local ii = self.perm_v[self.pos_v] 
-        local info = self.verifySamples[ii]
-
-        local fileName = info['name']
-        local img = self._processImage(fileName, true)
-        xBatch[i]:copy(img)
-
-        yBatch[1][i] = info['pose']
-        yBatch[2][i] = info['color']
-        yBatch[3][i] = info['maker']
-        yBatch[4][i] = info['type']
-
-        self.pos_v = self.pos_v + 1
-        if ( self.pos_v > self.verifyNumber) then
-            self.pos_v = 1
-        end
-    end
- 
-    collectgarbage();
-    return {xBatch, yBatch}  
 end
 
 dataProcessor.doSampling = function()
     local self = dataProcessor
-    local xBatch = torch.Tensor(batchSize, 3, targetHeight, targetWidth)
-    local yBatch = {}
-    for i=1,4 do
-        table.insert(yBatch, torch.Tensor(batchSize))
-    end
-    local fBatch = {}
     
-    local i = 1 
-    while true do
-        if ( i  > batchSize ) then
-            break;
-        end
-
-        local ii = self.perm_t[self.pos_t] 
-        local info = self.typicalSamples[ii]
-        
-        if ( info['color'] == 1 ) then
-            local fileName = info['name']
-            table.insert(fBatch, fileName)
-            local img = self._processImage(fileName)
-            xBatch[i]:copy(img)
-
-            yBatch[1][i] = info['pose']
-            yBatch[2][i] = info['color']
-            yBatch[3][i] = info['maker']
-            yBatch[4][i] = info['type']
-
-            i = i + 1
-        end
-
-        self.pos_t = self.pos_t + 1
-        if ( self.pos_t > self.typicalNumber) then
-            self.pos_t = 1
-        end
-    end
-
-    collectgarbage();
-    return {xBatch, yBatch, fBatch}
+    return nil
 end
 
 -- image random sampling 
@@ -132,10 +47,6 @@ dataProcessor._processImage = function(fileName, orignal)
     
     return targetImg;
 end
-
-dataProcessor.otherSamples = infoDB[1]
-dataProcessor.typicalSamples = infoDB[2]
-dataProcessor.verifySamples = infoDB[3]
 
 dataProcessor._init()
 
