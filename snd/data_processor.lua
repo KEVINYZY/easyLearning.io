@@ -33,6 +33,10 @@ dataProcessor._init = function(modelInfo)
     self.verifyPos = 1
 end
 
+dataProcessor._buildTarget = function( targets, masks, predBoxes )
+     
+end
+
 dataProcessor.doSampling = function()
     local self = dataProcessor
    
@@ -40,17 +44,37 @@ dataProcessor.doSampling = function()
     local targetWidth = allShapes[_][1]
     local targetHeight = allShapes[_][2]
 
+    local xinput = torch.Tensor(batchSize, 3, targetWidth, targetHeight)
+    local targets = {}
+    local masks = {}
+
+    for i = 1, #self.modelInfo.boxes do
+        local wid = lastWidth - (modelInfo.boxes[i][1] - 1)
+        local hei = lastHeight - (modelInfo.boxes[i][2] - 1)
+
+        local conf = torch.Tensor(batchSize, self.modelInfo.classNumber, hei, wid)
+        local loc = torch.Tensor(batchSize, 4, hei, wid)
+        table.insert(targets, conf)
+        table.insert(targets, loc)
+
+        local mask = torch.zeros(batchSize, hei, wid)
+        table.insert(masks, mask)
+    end
+
     local i = 1
-    while ( i <= 32 ) do
+    while ( i <= batchSize ) do
         local ii = self.trainPerm[self.trainPos] 
         local info = self.trainSamples[ii]
 
         local targetImg, labels = self._processImage(info, targetWidth, targetHeight)
                 
         if ( #labels > 0) then
+            xinput[i]:copy( targetImg);
+ 
+            local predBoxes = boxSampling(self.modelInfo, targetWidth, targetHeight, labels)
+            self._buildTarget(targets, masks, predBoxes)
+        
             i = i + 1
-            local predBoxes = boxSampling(self.modelInfo, info.image.width, info.image.height, labels)
-            
         end
 
         self.trainPos = self.trainPos + 1
@@ -58,8 +82,9 @@ dataProcessor.doSampling = function()
             self.trainPos = 1
         end
     end
-
     collectgarbage();
+
+    return {xinput, targets, masks}
 end
 
 dataProcessor.doVerifySampling = function()
