@@ -44,7 +44,7 @@ featureCNN:add(mbox)
 
 local getSize = function(imageWidth, imageHeight) 
     local targetWidth = math.floor(imageWidth/32) 
-    local targetHeight = math.floor(iamgeHeight/32)
+    local targetHeight = math.floor(imageHeight/32)
     
     return {targetWidth, targetHeight};
 end
@@ -60,8 +60,11 @@ print(y)
 local model = {}
 model.fixedCNN = fixedCNN
 model.featureCNN = featureCNN
-model.classNumber = classNumber
-model.boxes = allBoxes
-model.getSize = getSize
+
+local info = {}
+info.classNumber = classNumber
+info.boxes = allBoxes
+info.getSize = getSize
+model.info = info
 
 return model

@@ -6,14 +6,14 @@ Threads.serialization('threads.sharedserialize')
 local result = nil
 local DataLoader = {}
 
-function DataLoader.new(n, trainDBFile, randSeed)
+function DataLoader.new(n, trainDBFile, modelInfo, randSeed)
   local self = {}
   for k,v in pairs(DataLoader) do
     self[k] = v
   end
   
   if ( randSeed == nil) then
-    randSeed = 1979  
+    randSeed = 2014  
   end
 
   self.threads = Threads(n,
@@ -21,6 +21,7 @@ function DataLoader.new(n, trainDBFile, randSeed)
                            torch.manualSeed(randSeed + idx)
                            infoDB = torch.load(trainDBFile)
                            dataProcessor = paths.dofile('data_processor.lua')
+                           dataProcessor._init(modelInfo)
                            -- cleaning global var
                            infoDB = nil
                          end)
