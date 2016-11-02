@@ -2,6 +2,7 @@ require('torch')
 require('image')
 
 local boxSampling = require('boxsampling')
+local classToNumber = require('classnumber')
 
 local batchSize = 16
 local allShapes = { {256, 256} ,
@@ -20,6 +21,7 @@ local img2caffe = function(img)
     return img
 end
 
+
 dataProcessor._init = function(modelInfo)
     local self = dataProcessor
     self.modelInfo = modelInfo
@@ -33,8 +35,74 @@ dataProcessor._init = function(modelInfo)
     self.verifyPos = 1
 end
 
-dataProcessor._buildTarget = function( targets, masks, predBoxes )
-     
+dataProcessor._buildTarget = function(targetWidth, targetHeight, labels, targetImg)
+    local self = dataProcessor
+    
+    local _ = self.modelInfo.getSize(targetWidth, targetHeight)
+    local lastWidth = _[1]
+    local lastHeight = _[2]
+
+    local targets = {}
+    local masks = {}
+    local predBoxes = boxSampling(self.modelInfo, targetWidth, targetHeight, labels)
+    local pindex = 1    -- same order with boxSampling
+    for i = 1, #self.modelInfo.boxes do
+        local wid = lastWidth - (self.modelInfo.boxes[i][1] - 1)
+        local hei = lastHeight - (self.modelInfo.boxes[i][2] - 1)
+
+        local conf = torch.Tensor(hei, wid)
+        local loc = torch.Tensor(4, hei, wid)
+        local confMask = torch.zeros(hei, wid)
+        local locMask = torch.zeros(hei, wid)
+        
+        for h = 1,hei do
+            for w = 1,wid do
+                local pbox = predBoxes[pindex]
+                pindex = pindex + 1
+                
+                -- skkiped predition
+                if ( pbox.label == -1) then
+                    confMask[h][w] = 0
+                    locMask[h][w] = 0
+                end
+                
+                -- negative predition
+                if ( pbox.label == 0) then
+                    confMask[h][w] = 1
+                    locMask[h][w] = 0
+                    
+                    -- background
+                    conf[h][w] = self.modelInfo.classNumber
+                end
+                
+                -- positive predition
+                if ( pbox.label > 0) then
+                    confMask[h][w] = 1
+                    locMask[h][w] = 1
+        
+                    -- object
+                    conf[h][w] = classToNumber( labels[pbox.label].class )
+                        
+                    --[[
+                    targetImg = image.drawRect(targetImg, labels[pbox.label].xmin, labels[pbox.label].ymin, labels[pbox.label].xmax, labels[pbox.label].ymax);  
+                    targetImg = image.drawRect(targetImg, pbox.xmin+2, pbox.ymin+2, pbox.xmax-2, pbox.ymax-2, {color = {0, 255, 0}}); 
+                    --]]
+               end
+            end
+        end
+
+        table.insert(targets, conf)
+        table.insert(targets, loc)
+        table.insert(masks, confMask)
+        table.insert(masks, locMask)
+    end
+  
+    --[[
+    local randFile = './images/' .. math.random() .. '.jpg'
+    image.save(randFile, targetImg)
+    --]]
+
+    return targets, masks
 end
 
 dataProcessor.doSampling = function()
@@ -44,21 +112,27 @@ dataProcessor.doSampling = function()
     local targetWidth = allShapes[_][1]
     local targetHeight = allShapes[_][2]
 
+    local _ = self.modelInfo.getSize(targetWidth, targetHeight)
+    local lastWidth = _[1]
+    local lastHeight = _[2]
+
     local xinput = torch.Tensor(batchSize, 3, targetWidth, targetHeight)
     local targets = {}
     local masks = {}
 
     for i = 1, #self.modelInfo.boxes do
-        local wid = lastWidth - (modelInfo.boxes[i][1] - 1)
-        local hei = lastHeight - (modelInfo.boxes[i][2] - 1)
+        local wid = lastWidth - (self.modelInfo.boxes[i][1] - 1)
+        local hei = lastHeight - (self.modelInfo.boxes[i][2] - 1)
 
-        local conf = torch.Tensor(batchSize, self.modelInfo.classNumber, hei, wid)
+        local conf = torch.Tensor(batchSize, hei, wid)
         local loc = torch.Tensor(batchSize, 4, hei, wid)
         table.insert(targets, conf)
         table.insert(targets, loc)
 
-        local mask = torch.zeros(batchSize, hei, wid)
-        table.insert(masks, mask)
+        local confMask = torch.zeros(batchSize, hei, wid)
+        local locMask = torch.zeros(batchSize, hei, wid)
+        table.insert(masks, confMask)
+        table.insert(masks, locMask)
     end
 
     local i = 1
@@ -67,13 +141,16 @@ dataProcessor.doSampling = function()
         local info = self.trainSamples[ii]
 
         local targetImg, labels = self._processImage(info, targetWidth, targetHeight)
-                
-        if ( #labels > 0) then
+ 
+        if ( targetImg ~= nil) then
             xinput[i]:copy( targetImg);
  
-            local predBoxes = boxSampling(self.modelInfo, targetWidth, targetHeight, labels)
-            self._buildTarget(targets, masks, predBoxes)
-        
+            local ts, ms = self._buildTarget(targetWidth, targetHeight, labels, targetImg)
+            for j = 1, #ts do
+                targets[j][i]:copy( ts[j] )
+                masks[j][i]:copy( ms[j] )
+            end
+
             i = i + 1
         end
 
@@ -108,9 +185,7 @@ dataProcessor._processImage = function(info, targetWidth, targetHeight)
         cutWid, cutHei = math.floor(wid * scale), targetHeight
         offsety, offsetx = 0, math.floor(math.random() * (cutWid - targetWidth) )
     end
-    local scaledImg = image.scale(img, cutWid, cutHei)
-    local targetImg = image.crop(scaledImg, offsetx, offsety, offsetx + targetWidth, offsety + targetHeight) 
-
+    
     local labels = {}
     local anns = info["annotation"]
     for i = 1, #anns do
@@ -135,10 +210,19 @@ dataProcessor._processImage = function(info, targetWidth, targetHeight)
             if ( bbox.ymax >= targetHeight ) then
                 bbox.ymax = targetHeight
             end
-            
-            table.insert(labels, bbox)
+
+            if ( (bbox.ymax - bbox.ymin) > 16 and (bbox.xmax - bbox.xmin) > 16 ) then            
+                table.insert(labels, bbox)
+            end
         end
     end
+
+    if ( #labels == 0) then
+        return nil
+    end
+
+    local scaledImg = image.scale(img, cutWid, cutHei)
+    local targetImg = image.crop(scaledImg, offsetx, offsety, offsetx + targetWidth, offsety + targetHeight) 
 
     if ( math.random() > 0.5) then
         targetImg = image.hflip(targetImg)
@@ -154,11 +238,11 @@ dataProcessor._processImage = function(info, targetWidth, targetHeight)
         local bbox = labels[i]
         targetImg = image.drawRect(targetImg, bbox.xmin, bbox.ymin, bbox.xmax, bbox.ymax);  
     end
-    local randFile = './images/' .. math.random() .. '.jpg'
-    image.save(randFile, targetImg)
+    --local randFile = './images/' .. math.random() .. '.jpg'
+    --image.save(randFile, targetImg)
     --]]
-    
-    targetImg = img2caffe(targetImg)
+
+    --targetImg = img2caffe(targetImg)
     return targetImg, labels
 end
 
