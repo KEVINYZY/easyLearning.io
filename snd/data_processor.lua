@@ -79,15 +79,21 @@ dataProcessor._buildTarget = function(targetWidth, targetHeight, labels, targetI
                 if ( pbox.label > 0) then
                     confMask[h][w] = 1
                     locMask[h][w] = 1
-        
+     
                     -- object
                     conf[h][w] = classToNumber( labels[pbox.label].class )
-                        
+                   
+                    -- location
+                    loc[1][h][w] = (labels[pbox.label].xmin - pbox.xmin) / 32
+                    loc[2][h][w] = (labels[pbox.label].ymin - pbox.ymin) / 32
+                    loc[3][h][w] = (labels[pbox.label].xmax - pbox.xmax) / 32
+                    loc[4][h][w] = (labels[pbox.label].ymax - pbox.ymax) / 32
+                    
                     --[[
                     targetImg = image.drawRect(targetImg, labels[pbox.label].xmin, labels[pbox.label].ymin, labels[pbox.label].xmax, labels[pbox.label].ymax);  
-                    targetImg = image.drawRect(targetImg, pbox.xmin+2, pbox.ymin+2, pbox.xmax-2, pbox.ymax-2, {color = {0, 255, 0}}); 
+                    targetImg = image.drawRect(targetImg, pbox.xmin+2, pbox.ymin+2, pbox.xmax-2, pbox.ymax-2, {color = {0, 255, 0}});
                     --]]
-               end
+                end
             end
         end
 
@@ -96,7 +102,7 @@ dataProcessor._buildTarget = function(targetWidth, targetHeight, labels, targetI
         table.insert(masks, confMask)
         table.insert(masks, locMask)
     end
-  
+    
     --[[
     local randFile = './images/' .. math.random() .. '.jpg'
     image.save(randFile, targetImg)
@@ -105,7 +111,7 @@ dataProcessor._buildTarget = function(targetWidth, targetHeight, labels, targetI
     return targets, masks
 end
 
-dataProcessor.doSampling = function()
+dataProcessor.doSampling = function(isVerify)
     local self = dataProcessor
    
     local _ = math.floor(math.random() * 100) % 3 + 1
@@ -139,6 +145,10 @@ dataProcessor.doSampling = function()
     while ( i <= batchSize ) do
         local ii = self.trainPerm[self.trainPos] 
         local info = self.trainSamples[ii]
+        if ( isVerify == true) then
+            ii = self.verifyPerm[self.verifyPos] 
+            info = self.verifySamples[ii]
+        end
 
         local targetImg, labels = self._processImage(info, targetWidth, targetHeight)
  
@@ -154,9 +164,16 @@ dataProcessor.doSampling = function()
             i = i + 1
         end
 
-        self.trainPos = self.trainPos + 1
-        if ( self.trainPos > self.trainNumber) then
-            self.trainPos = 1
+        if ( isVerify == true ) then
+            self.verifyPos = self.verifyPos + 1
+            if ( self.verifyPos > self.verifyNumber) then
+                self.verifyPos = 1
+            end
+        else
+            self.trainPos = self.trainPos + 1
+            if ( self.trainPos > self.trainNumber) then
+                self.trainPos = 1
+            end
         end
     end
     collectgarbage();
@@ -166,8 +183,7 @@ end
 
 dataProcessor.doVerifySampling = function()
     local self = dataProcessor
-    
-    
+    return self.doSampling(true)
 end
 
 -- image random sampling 
@@ -250,4 +266,3 @@ dataProcessor.trainSamples = infoDB[1]
 dataProcessor.verifySamples = infoDB[2]
 
 return dataProcessor
-
