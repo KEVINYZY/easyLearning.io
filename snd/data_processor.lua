@@ -200,6 +200,15 @@ dataProcessor._processImage = function(info, targetWidth, targetHeight)
         cutWid, cutHei = math.floor(wid * scale), targetHeight
         offsety, offsetx = 0, math.floor(math.random() * (cutWid - targetWidth) )
     end
+
+    if ( cutWid <= targetWidth ) then
+        cutWid = targetWidth 
+        offsetx = 0
+    end
+    if ( cutHei <= targetHeight ) then
+        cutHei = targetHeight
+        cutsety = 0;
+    end
     
     local labels = {}
     local anns = info["annotation"]

@@ -86,7 +86,7 @@ local doTrain = function(itnum)
         if ( i % 100 ) == 0  then
             echo = true
         else
-            echo = false 
+            echo = true 
         end
 
         g.optim(feval, parameters, g.optimState) 
@@ -98,7 +98,7 @@ end
 local main = function()
     g.optim = optim.adam
     g.optimState = {
-        learningRate = 0.00001
+        learningRate = 0.0001
     }
     
     -- cuda 
@@ -108,8 +108,10 @@ local main = function()
         g.lossLayers[i]:cuda() 
     end
     
-    for e = 1, 20 do
-        doTrain(2000)
+    for e = 1, 50 do
+        doTrain(1000)
+        --g.optimState.learningRate = g.optimState.learningRate * 0.9
+        torch.save('models/model_' .. e .. '.t7', g.featureCNN);
     end
 end 
 
