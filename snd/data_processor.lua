@@ -82,7 +82,7 @@ dataProcessor._buildTarget = function(targetWidth, targetHeight, labels, targetI
                 if ( pbox.label > 0) then
                     confMask[h][w] = 1
                     locMask[h][w] = 1
-     
+ 
                     -- object
                     conf[h][w] = classToNumber( labels[pbox.label].class )
                    

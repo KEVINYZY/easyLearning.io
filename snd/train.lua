@@ -39,9 +39,9 @@ local doTrain = function(itnum)
         local totalLoss = {}
         local dfs = {}
         for i = 1, #f do
-            if ( i % 2 == 0) then
-                print( ybatch[i] )
-                os.exit(0)
+            
+            if (i % 2) == 0 then
+                print(masks[i][3]:sum()) 
             end
 
             local loss = g.lossLayers[i]:forward(f[i], ybatch[i])
@@ -50,7 +50,10 @@ local doTrain = function(itnum)
             table.insert(totalLoss, loss)
             table.insert(dfs, df)
         end
-        
+       
+        print(totalLoss)
+        os.exit(0)
+
         g.featureCNN:backward(xinput, dfs)
         
         if echo then
@@ -64,7 +67,7 @@ local doTrain = function(itnum)
         local batch = g.dataLoader:getBatch()
         xbatch = batch[1]:cuda()
         ybatch = batch[2]
-        masks = batch[2]
+        masks = batch[3]
         for j = 1, #ybatch do
             ybatch[j] = ybatch[j]:cuda()
             masks[j] = masks[j]:cuda()
