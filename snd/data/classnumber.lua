@@ -1,4 +1,3 @@
-
 local classToNumber = function(className) 
     if ( className == 'aeroplane') then
         return 1

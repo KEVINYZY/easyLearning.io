@@ -1,17 +1,43 @@
 require('nn')
-require('cunn')
 require('image')
 
 torch.setdefaulttensortype('torch.FloatTensor')
 
 local classNumber = 21
+local allBoxes = { {2,2}, {3,3}, {4,4}, {5,5},  
+                   {1,2}, {2,1}, {2,4}, {4,2}, {3,6}, {6,3},
+                   {1,3}, {3,1}, {2,6}, {6,2},
+                   {2,3}, {3,2}, {4,6}, {6,4},
+                   {2,5}, {5,2}, {3,4}, {4,3},
+                   {3,5}, {5,3} }
+
 
 local fixedCNN = torch.load('fixedCNN.t7');
 fixedCNN:evaluate()
 
--- input is 56x56
 local featureCNN = nn.Sequential()
 
+--[[
+-- input is 56x56
+featureCNN:add( nn.SpatialConvolution(128, 256, 3, 3, 1, 1, 1, 1) )
+featureCNN:add( nn.ReLU(true) )
+featureCNN:add( nn.SpatialConvolution(256, 256, 3, 3, 1, 1, 1, 1) )
+featureCNN:add( nn.ReLU(true) )
+featureCNN:add( nn.SpatialConvolution(256, 256, 3, 3, 1, 1, 1, 1) )
+featureCNN:add( nn.ReLU(true) )
+featureCNN:add( nn.SpatialMaxPooling(2, 2, 2, 2, 0, 0):ceil() )
+--]]
+
+-- input is 28x28
+featureCNN:add( nn.SpatialConvolution(256, 512, 3, 3, 1, 1, 1, 1) )
+featureCNN:add( nn.ReLU(true) )
+featureCNN:add( nn.SpatialConvolution(512, 512, 3, 3, 1, 1, 1, 1) )
+featureCNN:add( nn.ReLU(true) )
+featureCNN:add( nn.SpatialConvolution(512, 512, 3, 3, 1, 1, 1, 1) )
+featureCNN:add( nn.ReLU(true) )
+featureCNN:add( nn.SpatialMaxPooling(2, 2, 2, 2, 0, 0):ceil() )
+
+-- input is 14x14
 featureCNN:add( nn.SpatialConvolution(512, 512, 3, 3, 1, 1, 1, 1) )
 featureCNN:add( nn.ReLU(true) )
 featureCNN:add( nn.SpatialConvolution(512, 512, 3, 3, 1, 1, 1, 1) )
@@ -25,31 +51,21 @@ featureCNN:add( nn.SpatialMaxPooling(2, 2, 2, 2, 0, 0):ceil() )
 featureCNN:add(nn.SpatialConvolution(512, 1024, 1, 1, 1, 1, 0, 0))
 featureCNN:add(nn.LeakyReLU(0.1))
 
+local lossLayers = {}
 local mbox = nn.ConcatTable()
-local allBoxes = { {2,2}, {3,3}, {4,4}, {5,5}, {6,6}, {7,7}, 
-                   {1,2}, {2,1}, {2,4}, {4,2}, {3,6}, {6,3},
-                   {1,3}, {3,1}, {2,6}, {6,2},
-                   {2,3}, {3,2}, {4,6}, {6,4},
-                   {2,5}, {5,2}, {3,4}, {4,3} }
-
 for i = 1, #allBoxes do
     local boxConf = nn.Sequential()
     boxConf:add(nn.SpatialConvolution(1024, classNumber, allBoxes[i][1], allBoxes[i][2], 1, 1, 0, 0))
     boxConf:add(nn.SpatialLogSoftMax())
     mbox:add(boxConf)
+    table.insert(lossLayers, nn.SpatialClassNLLCriterion())
  
     local boxLoc = nn.Sequential()
     boxLoc:add(nn.SpatialConvolution(1024,  4, allBoxes[i][1], allBoxes[i][2], 1, 1, 0, 0))
     mbox:add(boxLoc)
+    table.insert(lossLayers, nn.MSECriterion())  
 end
 featureCNN:add(mbox)
-
-local getSize = function(imageWidth, imageHeight) 
-    local targetWidth = math.floor(imageWidth/32) 
-    local targetHeight = math.floor(imageHeight/32)
-    
-    return {targetWidth, targetHeight};
-end
 
 --[[
 fixedCNN:cuda()
@@ -59,9 +75,17 @@ local y = featureCNN:forward( fixedCNN:forward(x) )
 print(y)
 --]]
 
+local getSize = function(imageWidth, imageHeight) 
+    local targetWidth = math.floor(imageWidth/32) 
+    local targetHeight = math.floor(imageHeight/32)
+    
+    return {targetWidth, targetHeight};
+end
+
 local model = {}
 model.fixedCNN = fixedCNN
 model.featureCNN = featureCNN
+model.lossLayers = lossLayers
 
 local info = {}
 info.classNumber = classNumber
