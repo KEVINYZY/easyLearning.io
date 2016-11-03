@@ -35,24 +35,22 @@ local doTrain = function(itnum)
         gradParameters:zero()
         local xinput = g.fixedCNN:forward(xbatch)
         local f = g.featureCNN:forward(xinput)
-       
-        print(f)
-        print(ybatch)
-
+     
         local totalLoss = {}
         local dfs = {}
         for i = 1, #f do
-             local loss = g.lossLayers[i]:forward(f[i], ybatch[i])
-             local df = g.lossLayers[i]:backward(f[i], ybatch[i])
+            if ( i % 2 == 0) then
+                print( ybatch[i] )
+                os.exit(0)
+            end
 
-             table.insert(totalLoss, loss)
-             table.insert(dfs, df)
+            local loss = g.lossLayers[i]:forward(f[i], ybatch[i])
+            local df = g.lossLayers[i]:backward(f[i], ybatch[i])
+                
+            table.insert(totalLoss, loss)
+            table.insert(dfs, df)
         end
         
-        print(dfs)
-
-        os.exit(0)
-    
         g.featureCNN:backward(xinput, dfs)
         
         if echo then
@@ -98,7 +96,7 @@ local main = function()
     end
     
     for e = 1, 1 do
-        doTrain(10)
+        doTrain(100)
     end
 end 
 

@@ -50,8 +50,8 @@ dataProcessor._buildTarget = function(targetWidth, targetHeight, labels, targetI
         local wid = lastWidth - (self.modelInfo.boxes[i][1] - 1)
         local hei = lastHeight - (self.modelInfo.boxes[i][2] - 1)
 
-        local conf = torch.Tensor(hei, wid)
-        local loc = torch.Tensor(4, hei, wid)
+        local conf = torch.zeros(hei, wid)
+        local loc = torch.zeros(4, hei, wid)
         local confMask = torch.zeros(hei, wid)
         local locMask = torch.zeros(hei, wid)
         
@@ -64,6 +64,9 @@ dataProcessor._buildTarget = function(targetWidth, targetHeight, labels, targetI
                 if ( pbox.label == -1) then
                     confMask[h][w] = 0
                     locMask[h][w] = 0
+                    
+                    -- set to backgroud
+                    conf[h][w] = self.modelInfo.classNumber
                 end
                 
                 -- negative predition
@@ -122,7 +125,7 @@ dataProcessor.doSampling = function(isVerify)
     local lastWidth = _[1]
     local lastHeight = _[2]
 
-    local xinput = torch.Tensor(batchSize, 3, targetWidth, targetHeight)
+    local xinput = torch.Tensor(batchSize, 3, targetHeight, targetWidth)
     local targets = {}
     local masks = {}
 
