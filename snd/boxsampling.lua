@@ -86,7 +86,7 @@ local boxSampling = function(modelInfo, imageWidth, imageHeight, labels)
     -- select rest best match > threshold as postive
     for i = 1, #predBoxes do
         local score, _ = matchMap[i]:max(1)
-        if ( score[1] > 0.65 ) then
+        if ( score[1] > 0.50 ) then
             predBoxes[i].score = score[1]
             predBoxes[i].label = _[1];
             matchMap[i] = -1
@@ -98,7 +98,11 @@ local boxSampling = function(modelInfo, imageWidth, imageHeight, labels)
     local tempMap = matchMap:reshape(#predBoxes * #labels)
     local score, _ = tempMap:sort(true)
     for i = 1, positiveNumber * 4 do
-        local p = math.floor( (_[1] - 1) / #labels) + 1
+        if ( i > #predBoxes * #labels) then
+            break
+        end
+        
+        local p = math.floor( (_[i] - 1) / #labels) + 1
         predBoxes[p].score = score[i]
         predBoxes[p].label = 0
         negativeNumber = negativeNumber + 1

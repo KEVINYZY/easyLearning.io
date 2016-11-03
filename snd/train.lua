@@ -39,25 +39,35 @@ local doTrain = function(itnum)
         local totalLoss = {}
         local dfs = {}
         for i = 1, #f do
-            
-            if (i % 2) == 0 then
-                print(masks[i][3]:sum()) 
+            if  ( i % 2 == 0) then
+                f[i]:cmul(masks[i])
             end
 
             local loss = g.lossLayers[i]:forward(f[i], ybatch[i])
             local df = g.lossLayers[i]:backward(f[i], ybatch[i])
-                
+            
+            if ( i % 2 == 1) then
+                df:cmul(masks[i])
+            end
+
             table.insert(totalLoss, loss)
             table.insert(dfs, df)
         end
        
-        print(totalLoss)
-        os.exit(0)
-
         g.featureCNN:backward(xinput, dfs)
         
         if echo then
-            print(totalLoss)
+            local locErr = 0
+            local confErr = 0
+            for i = 1, #totalLoss do
+                if (i % 2) == 1 then
+                    confErr = confErr + totalLoss[i]
+                else
+                    locErr = locErr + totalLoss[i]
+                end
+            end
+            print("")
+            print(confErr, locErr)
         end
 
         return totalLoss, gradParameters
@@ -76,7 +86,7 @@ local doTrain = function(itnum)
         if ( i % 100 ) == 0  then
             echo = true
         else
-            echo = true
+            echo = false 
         end
 
         g.optim(feval, parameters, g.optimState) 
@@ -88,7 +98,7 @@ end
 local main = function()
     g.optim = optim.adam
     g.optimState = {
-        learningRate = 0.0001
+        learningRate = 0.00001
     }
     
     -- cuda 
@@ -98,8 +108,8 @@ local main = function()
         g.lossLayers[i]:cuda() 
     end
     
-    for e = 1, 1 do
-        doTrain(100)
+    for e = 1, 20 do
+        doTrain(2000)
     end
 end 
 

@@ -4,7 +4,7 @@ require('image')
 local boxSampling = require('boxsampling')
 local classToNumber = require('data/classnumber')
 
-local batchSize = 4
+local batchSize = 24 
 local allShapes = { {256, 256} ,
                     {224, 288} ,
                     {288, 224} }
@@ -52,8 +52,8 @@ dataProcessor._buildTarget = function(targetWidth, targetHeight, labels, targetI
 
         local conf = torch.zeros(hei, wid)
         local loc = torch.zeros(4, hei, wid)
-        local confMask = torch.zeros(hei, wid)
-        local locMask = torch.zeros(hei, wid)
+        local confMask = torch.zeros(21, hei, wid)
+        local locMask = torch.zeros(4, hei, wid)
         
         for h = 1,hei do
             for w = 1,wid do
@@ -62,17 +62,13 @@ dataProcessor._buildTarget = function(targetWidth, targetHeight, labels, targetI
                 
                 -- skkiped predition
                 if ( pbox.label == -1) then
-                    confMask[h][w] = 0
-                    locMask[h][w] = 0
-                    
                     -- set to backgroud
                     conf[h][w] = self.modelInfo.classNumber
                 end
                 
                 -- negative predition
                 if ( pbox.label == 0) then
-                    confMask[h][w] = 1
-                    locMask[h][w] = 0
+                    confMask[{{}, h, w}] = 1
                     
                     -- background
                     conf[h][w] = self.modelInfo.classNumber
@@ -80,17 +76,17 @@ dataProcessor._buildTarget = function(targetWidth, targetHeight, labels, targetI
                 
                 -- positive predition
                 if ( pbox.label > 0) then
-                    confMask[h][w] = 1
-                    locMask[h][w] = 1
- 
+                    confMask[{{}, h, w}] = 1
+                    locMask[{{}, h, w}] = 1
+                    
                     -- object
                     conf[h][w] = classToNumber( labels[pbox.label].class )
                    
                     -- location
-                    loc[1][h][w] = (labels[pbox.label].xmin - pbox.xmin) / 32
-                    loc[2][h][w] = (labels[pbox.label].ymin - pbox.ymin) / 32
-                    loc[3][h][w] = (labels[pbox.label].xmax - pbox.xmax) / 32
-                    loc[4][h][w] = (labels[pbox.label].ymax - pbox.ymax) / 32
+                    loc[1][h][w] = (labels[pbox.label].xmin - pbox.xmin) / 16 
+                    loc[2][h][w] = (labels[pbox.label].ymin - pbox.ymin) / 16
+                    loc[3][h][w] = (labels[pbox.label].xmax - pbox.xmax) / 16
+                    loc[4][h][w] = (labels[pbox.label].ymax - pbox.ymax) / 16
                     
                     --[[
                     targetImg = image.drawRect(targetImg, labels[pbox.label].xmin, labels[pbox.label].ymin, labels[pbox.label].xmax, labels[pbox.label].ymax);  
@@ -138,8 +134,8 @@ dataProcessor.doSampling = function(isVerify)
         table.insert(targets, conf)
         table.insert(targets, loc)
 
-        local confMask = torch.zeros(batchSize, hei, wid)
-        local locMask = torch.zeros(batchSize, hei, wid)
+        local confMask = torch.zeros(batchSize, 21, hei, wid)
+        local locMask = torch.zeros(batchSize, 4, hei, wid)
         table.insert(masks, confMask)
         table.insert(masks, locMask)
     end

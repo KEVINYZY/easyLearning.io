@@ -47,7 +47,6 @@ featureCNN:add( nn.ReLU(true) )
 featureCNN:add( nn.SpatialMaxPooling(2, 2, 2, 2, 0, 0):ceil() )
 
 -- output is 7x7
-
 featureCNN:add(nn.SpatialConvolution(512, 1024, 1, 1, 1, 1, 0, 0))
 featureCNN:add(nn.LeakyReLU(0.1))
 
