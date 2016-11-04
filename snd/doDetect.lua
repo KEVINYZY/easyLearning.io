@@ -2,7 +2,7 @@ require('torch')
 require('cunn')
 require('image')
 
-local minSize = 288
+local minSize = 256 
 local processImage = function(fileName, targetWidth, targetHeight)
     local img2caffe = function(img)
         local mean_pixel = torch.Tensor({103.939, 116.779, 123.68})
@@ -110,7 +110,7 @@ for i = 1, #modelInfo.boxes do
             local pbox = predBoxes[ii]
             local smf = conf[{{}, h, w}]:reshape(modelInfo.classNumber)
             local v,_ = smf:max(1)
-            if ( _[1] ~= modelInfo.classNumber and math.exp(v[1]) > 0.5 ) then
+            if ( _[1] ~= modelInfo.classNumber and math.exp(v[1]) > 0.60 ) then
                 local box = {}
                 box.v = v[1]
                 box.c = _[1]
@@ -123,7 +123,7 @@ for i = 1, #modelInfo.boxes do
                 for j = 1, #maxBoxes do
                     if ( maxBoxes[j].c == box.c ) then
                         overlap = jaccardOverlap(box, maxBoxes[j])
-                        if ( overlap > 0.33) then
+                        if ( overlap > 0.4) then
                             if ( box.v > maxBoxes[j].v ) then
                                 maxBoxes[j] = box
                             end
