@@ -266,7 +266,7 @@ dataProcessor._processImage = function(info, targetWidth, targetHeight)
     --image.save(randFile, targetImg)
     --]]
 
-    --targetImg = img2caffe(targetImg)
+    targetImg = img2caffe(targetImg)
     return targetImg, labels
 end
 

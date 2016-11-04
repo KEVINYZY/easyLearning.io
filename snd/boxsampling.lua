@@ -51,10 +51,15 @@ local boxSampling = function(modelInfo, imageWidth, imageHeight, labels)
                 box.ymax = (h + modelInfo.boxes[i][2] - 1) * cellHeight
                 
                 table.insert(predBoxes, box)
+                predBoxes["_" .. i .. "_" .. h .. "_" .. w] = box
             end
         end
     end
-    
+   
+    if ( labels == nil) then
+        return predBoxes
+    end
+
     -- find best match between labels (groud truth) and predBoxes
     local matchMap = torch.zeros(#predBoxes, #labels) - 1
     for i = 1, #predBoxes do
