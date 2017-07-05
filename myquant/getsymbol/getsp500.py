@@ -33,8 +33,9 @@ def putAllSymbols(jsonFile, allSymbols):
             jline = json.dumps(symbol)
             jfile.write(jline)
             jfile.write(",\n")
+        jfile.write("{}\n")
         jfile.write("]")
 
 symbols = getAllSymbols()
-putAllSymbols("temp.json", symbols)
+putAllSymbols("sp500_symbol.json", symbols)
 
