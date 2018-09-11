@@ -17,7 +17,7 @@ public:
 
 protected:
     virtual varptr_list _forward(const const_varptr_list& bottoms) override;
-    virtual tensor_list _backward(const varptr_list& tops, const tensor_list& grads) override;
+    virtual tensor_list _backward(const tensor_list& grads) override;
 
 public:
     ${op_members}
@@ -36,8 +36,8 @@ varptr_list  ${op_name}::_forward(const const_varptr_list& bottoms) {
 
     return result;
 }
-tensor_list ${op_name}::_backward(const varptr_list& tops, const tensor_list& grads) {
-    assert( tops.size() > 0);
+tensor_list ${op_name}::_backward(const tensor_list& grads) {
+    assert( tops_.size() > 0);
     tensor_list ret;
 
     //saved inputs
@@ -211,11 +211,11 @@ def gen_operator_backward(env, func):
     api_return = declaration["return_type"].replace("Tensor", "varptr")
     if ( api_return.startswith("std::tuple") or api_return.startswith("varptr") ):
         for i in range( len ( declaration["returns"]) ):
-            tops_inits.append("auto {} = tops[{}]->data();".format( declaration["returns"][i]["name"], i));
+            tops_inits.append("auto {} = tops_[{}];".format( declaration["returns"][i]["name"], i));
     elif api_return.startswith("std::vector") :
         tops_inits.append("std::vector<Tensor> result;")
         tops_inits.append("for(size_t i = 0; i < tops.size(); i++) {")
-        tops_inits.append("    result[i] = tops[i]->data();")
+        tops_inits.append("    result[i] = tops[i];")
         tops_inits.append("}")
     else:
         raise RuntimeError(

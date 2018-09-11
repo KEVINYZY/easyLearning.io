@@ -15,7 +15,9 @@ struct Operator;
 struct Variable : std::enable_shared_from_this<Variable> {
 public:
   Variable() = default;
-  virtual ~Variable() = default;
+  virtual ~Variable() {
+    std::cout << " var is deleted" << std::endl;
+  }
 
   // basic control
   const char* toString() const;
@@ -24,7 +26,7 @@ public:
   void set_name(const std::string& name);
   const std::string& name() const noexcept;
   std::shared_ptr<Variable> get_shared_ptr();
-  std::shared_ptr<const Operator> grad_op() const;
+  std::shared_ptr<Operator> grad_op() const;
   const int grad_output() const;
 
   // fast access variable's properties
@@ -85,7 +87,7 @@ inline std::shared_ptr<Variable> Variable::get_shared_ptr() {
   return shared_from_this();
 }
 
-inline std::shared_ptr<const Operator> Variable::grad_op() const {
+inline std::shared_ptr<Operator> Variable::grad_op() const {
   return grad_op_;
 }
 

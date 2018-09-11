@@ -56,6 +56,10 @@ def auto(aten_path, out):
     from load_derivatives import load_derivatives
     autograd_functions = load_derivatives(derivatives_path, aten_decls)
 
+    with open( os.path.join(out, 'autograd_functions.txt'), "w") as f:
+        allInfo = yaml.dump(autograd_functions)
+        f.write(allInfo);
+    
     from gen_apis import gen_apis
     gen_apis(out, autograd_functions)
 
