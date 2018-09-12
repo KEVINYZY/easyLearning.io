@@ -19,7 +19,7 @@ varptr_list Operator::forward(const const_varptr_list& bottoms) {
     return tops;
 }
 
-tensor_list Operator::backward(const tensor_list& grads, std::vector<int> outputs) {
+vargrad_list Operator::backward(const tensor_list& grads, std::vector<int> outputs) {
     assert( grads.size() == outputs.size() );
     assert( tops_.size() > 0);
 
@@ -40,7 +40,14 @@ tensor_list Operator::backward(const tensor_list& grads, std::vector<int> output
     }
     assert( all_grads.size() == tops_.size());
 
-    return _backward(all_grads);
+    auto inputGrads = _backward(all_grads);
+    assert(inputGrads.size() == bottoms_.size());
+
+    vargrad_list ret;
+    for(size_t i = 0; i < bottoms_.size(); i++) {
+        ret.push_back( std::make_tuple( bottoms_[i], inputGrads[i]) );
+    }
+    return ret;
 }
 
 //AccumulatedOperator

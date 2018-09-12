@@ -23,6 +23,8 @@ public:
   const char* toString() const;
   const at::Tensor& data() const noexcept;
   at::Tensor& data() noexcept;
+  const at::Tensor& grad() const noexcept;
+  at::Tensor& grad() noexcept;
   void set_name(const std::string& name);
   const std::string& name() const noexcept;
   std::shared_ptr<Variable> get_shared_ptr();
@@ -56,8 +58,6 @@ protected:
   friend std::shared_ptr<Variable> make_variable(at::Tensor data, bool requires_grad);
   friend std::shared_ptr<Variable> make_symbol(bool requires_grad);
   friend std::shared_ptr<Variable> make_symbol(std::shared_ptr<Operator> grad_op, int grad_output);
-
-  friend int backward(std::shared_ptr<Variable> var, std::shared_ptr<const Variable> grad);
 };
 
 inline const char* Variable::toString() const {
@@ -73,6 +73,14 @@ inline const at::Tensor& Variable::data() const noexcept {
 
 inline at::Tensor& Variable::data() noexcept {
   return data_;
+}
+
+inline const at::Tensor& Variable::grad() const noexcept {
+  return grad_;
+}
+
+inline at::Tensor& Variable::grad() noexcept {
+  return grad_;
 }
 
 inline void Variable::set_name (const std::string& name) {

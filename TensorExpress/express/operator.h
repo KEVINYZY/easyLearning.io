@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <tuple>
 
 namespace express {
 struct Variable;
@@ -18,6 +19,7 @@ using const_varptr = std::shared_ptr<const Variable>;
 using varptr_list = std::vector< std::shared_ptr<Variable>>;
 using const_varptr_list = std::vector< std::shared_ptr<const Variable>>;
 using tensor_list = std::vector<at::Tensor>;
+using vargrad_list = std::vector< std::tuple<varptr, at::Tensor>>;
 
 struct Operator : std::enable_shared_from_this<Operator> {
 public:
@@ -35,7 +37,7 @@ public:
   std::shared_ptr<Operator> get_shared_ptr();
 
   varptr_list forward(const const_varptr_list& bottoms);
-  tensor_list backward(const tensor_list& grads, std::vector<int> outputs);
+  vargrad_list backward(const tensor_list& grads, std::vector<int> outputs);
 
 protected:
   virtual varptr_list _forward(const const_varptr_list& bottoms) = 0;

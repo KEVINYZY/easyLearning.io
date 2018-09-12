@@ -38,5 +38,4 @@ int main(const int argc, const char* argv[]) {
     at::Tensor bar = at::CPU(at::kFloat).rand({3,3});
     auto grad = express::make_variable(bar, false);
     int result = express::backward(var2, grad);
-
 }
