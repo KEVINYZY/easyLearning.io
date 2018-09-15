@@ -15,7 +15,7 @@ ${api_return} ${api_name}(${api_args});
 API_DEFINE = CodeTemplate("""\
 ${api_return} ${api_name}(${api_args}) {
     ${api_return} result;
-    
+
     auto op = std::make_shared<${op}>();
     ${op_inits}
 
@@ -30,8 +30,16 @@ ${api_return} ${api_name}(${api_args}) {
 
 """)
 
+
+API_INPLACE_DECLARATION = CodeTemplate("""\
+inline void ${api_name}(${api_args}) {
+    self->data().${opcall};
+}
+
+""")
+
 def gen_apis(out, autograd_functions):
-    
+
     all_apis_declarations = []
     all_apis_defines = []
     for func in autograd_functions:
@@ -41,9 +49,11 @@ def gen_apis(out, autograd_functions):
 
             all_apis_declarations.append(API_DECLARATION.substitute(declr))
             all_apis_defines.append( API_DEFINE.substitute(defn) )
+        elif ( "Tensor"  in func["declaration"]["method_of"] and func["declaration"]["inplace"] == True):
+                declr = gen_api_inplace_declaration(func)
+                all_apis_declarations.append(API_INPLACE_DECLARATION.substitute(declr))
         else:
-            ## TODO
-            pass
+            print("TODO:" + func["declaration"]["name"])
 
     top_env = {
         "auto_api_declarations" : all_apis_declarations,
@@ -60,14 +70,14 @@ def gen_api_args(func, isDeclaration):
         arg = declaration["formals"][i]
         if ( declaration["arguments"][i]["simple_type"] == "Tensor" ):
             arg = arg.replace("const Tensor &", "const_varptr")
-            arg = arg.replace("Tensor", "variable")
+            arg = arg.replace("Tensor", "varptr")
 
         if ( declaration["arguments"][i]["simple_type"] == "TensorList" ):
             arg = arg.replace("TensorList", "const_varptr_list")
 
         if ( isDeclaration and  ("default" in declaration["arguments"][i] )):
             arg = arg + " = " + str(declaration["arguments"][i]["default"]).replace("False", "false").replace("True", "true")
-        
+
         api_args = api_args + arg + ","
     api_args = api_args[:-1]
     return api_args
@@ -77,10 +87,10 @@ def gen_api_declaration(func):
     declaration = func["declaration"]
     env = {}
     env["api_name"] = declaration["api_name"];
-    
+
     assert( len(declaration["formals"]) == len( declaration["arguments"]) )
     api_args = gen_api_args(func, True)
-    
+
     env["api_args"] = api_args
     env["api_return"] = declaration["return_type"].replace("Tensor", "varptr")
 
@@ -97,13 +107,33 @@ def gen_api_declaration(func):
         raise RuntimeError(
                 "Unsupport return type : '{}' for op '{}' "
                 .format(env["api_return"], func["op"] ) )
-    
+
     return env
+
+def gen_api_inplace_declaration(func):
+    declaration = func["declaration"]
+    env = {}
+    env["api_name"] = declaration["api_name"];
+
+    assert( len(declaration["formals"]) == len( declaration["arguments"]) )
+    api_args = gen_api_args(func, True)
+    env["api_args"] = api_args
+
+    opcall = declaration["name"] + "("
+    for i in range(1, len(declaration["arguments"])):
+        arg = declaration["arguments"][i]
+        opcall = opcall + arg["name"] + ", ";
+
+    opcall = opcall[:-2] + ")"
+    env["opcall"] = opcall
+
+    return env
+
 
 def gen_api_define(declr, func):
     declaration = func["declaration"]
     env = copy.copy(declr)
-    
+
     api_args = gen_api_args(func, False)
     env["api_args"] = api_args
     env["op"] = func["op"]
@@ -130,9 +160,9 @@ def gen_api_define(declr, func):
                     bottoms_inits.append( bottoms_init )
                 elif ( arg["simple_type"] == "TensorList" ):
                     tensorList_isinput = True
-                    bottoms_inits.append("bottoms = {};".format( arg["name"])) 
+                    bottoms_inits.append("bottoms = {};".format( arg["name"]))
                 else:
-                    raise RuntimeError("op '{}' contains unsupported input : ".format( func["op"], arg["name"] )); 
+                    raise RuntimeError("op '{}' contains unsupported input : ".format( func["op"], arg["name"] ));
 
     if ( tensorList_isinput and len(bottoms_inits) != 1) :
         raise RuntimeError("op '{}' TensorList must be only one tensor input!".format( func["op"] ))
