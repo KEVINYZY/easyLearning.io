@@ -122,9 +122,15 @@ def gen_api_inplace_declaration(func):
     opcall = declaration["name"] + "("
     for i in range(1, len(declaration["arguments"])):
         arg = declaration["arguments"][i]
-        opcall = opcall + arg["name"] + ", ";
+        if arg["simple_type"] != "Tensor":
+            opcall = opcall + arg["name"]
+        else:
+            arg["simple_type"] == "Tensor":
+            opcall = opcall + arg["name"] + "->data()"
+        if ( i != len(declaration["arguments"]) - 1 ):
+            opcall = opcall + ", "
 
-    opcall = opcall[:-2] + ")"
+    opcall = ")"
     env["opcall"] = opcall
 
     return env
