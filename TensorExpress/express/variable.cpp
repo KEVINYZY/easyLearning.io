@@ -35,10 +35,10 @@ std::shared_ptr<Variable> make_variable(at::Tensor data, bool requires_grad) {
   auto var_ptr = std::make_shared<express::Variable>();
 
   var_ptr->data_ = data;
-
   if ( requires_grad ) {
     var_ptr->grad_op_ = AccumulatedOperator::singleton();
     var_ptr->grad_output_ = 0;
+    var_ptr->grad_ = at::zeros_like(data);
   } else {
     var_ptr->grad_op_.reset();
     var_ptr->grad_output_ = -1;

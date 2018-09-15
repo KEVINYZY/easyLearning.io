@@ -54,13 +54,11 @@ vargrad_list Operator::backward(const tensor_list& grads, std::vector<int> outpu
 std::shared_ptr<AccumulatedOperator> AccumulatedOperator::singleton_;
 
 varptr_list AccumulatedOperator::_forward(const const_varptr_list& bottoms) {
-    varptr_list tops;
-    return tops;
+    return {};
 }
 
 tensor_list AccumulatedOperator::_backward(const tensor_list& grads) {
-    tensor_list bottom_grads;
-    return bottom_grads;
+    return {};
 }
 
 } // namespace express
