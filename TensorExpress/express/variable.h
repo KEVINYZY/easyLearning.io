@@ -56,7 +56,7 @@ protected:
   friend std::shared_ptr<Variable> make_variable(at::Tensor data, bool requires_grad);
 };
 
-inline const char* Variable::toString() {
+inline const char* Variable::toString() const {
   if ( isConstant() ) {
     return "Constant";
   }

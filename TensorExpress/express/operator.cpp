@@ -27,7 +27,7 @@ vargrad_list Operator::backward(const tensor_list& grads, std::vector<int> outpu
     for(size_t i = 0; i < tops_.size(); i++) {
         bool find = false;
         for(size_t j = 0; j < outputs.size(); j++) {
-            if ( i == outputs[j]) {
+            if ( (int)i == outputs[j]) {
                 all_grads.push_back( grads[j] );
                 find = true;
                 break;
