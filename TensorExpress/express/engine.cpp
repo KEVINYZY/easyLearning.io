@@ -12,10 +12,6 @@ std::vector<DAGNode> doBackward(varptr var, at::Tensor grad) {
     if ( var->isConstant() ) {
         return {};
     }
-    if ( var->isSymbol() ) {
-        // TODO
-        return {};
-    }
     if ( var->isAccumulated() ) {
         assert(var->data().is_same_size(grad));
 
@@ -24,6 +20,9 @@ std::vector<DAGNode> doBackward(varptr var, at::Tensor grad) {
 
         return {};
     }
+    
+    // var is a true Variable
+    var->grad() = grad;
 
     // call op's backward
     assert( var->data().is_same_size(grad) );

@@ -38,11 +38,9 @@ public:
   at::Backend backend() const;
 
   // fast inline check
-  bool isSymbol() const;
-  bool isVariable() const;
   bool isAccumulated() const;
   bool isConstant() const;
-  bool isReacted() const;
+  bool isVariable() const;
 
 protected:
   std::string name_;
@@ -56,15 +54,16 @@ protected:
 
   friend std::shared_ptr<Variable> make_variable(at::Tensor data, std::shared_ptr<Operator> grad_op, int grad_output);
   friend std::shared_ptr<Variable> make_variable(at::Tensor data, bool requires_grad);
-  friend std::shared_ptr<Variable> make_symbol(bool requires_grad);
-  friend std::shared_ptr<Variable> make_symbol(std::shared_ptr<Operator> grad_op, int grad_output);
 };
 
-inline const char* Variable::toString() const {
-    if ( isSymbol() ) {
-        return "Symbol";
-    }
-    return "Variable";
+inline const char* Variable::toString() {
+  if ( isConstant() ) {
+    return "Constant";
+  }
+  if ( isAccumulated() ) {
+    return "Parameter";
+  }
+  return "Variable";
 }
 
 inline const at::Tensor& Variable::data() const noexcept {
@@ -121,7 +120,5 @@ inline at::Backend Variable::backend() const {
 
 std::shared_ptr<Variable> make_variable(at::Tensor data, std::shared_ptr<Operator> grad_op, int grad_output = 0);
 std::shared_ptr<Variable> make_variable(at::Tensor data, bool requires_grad);
-std::shared_ptr<Variable> make_symbol();
-std::shared_ptr<Variable> make_symbol(std::shared_ptr<Operator> grad_op, int grad_output = 0);
 
 } // namespace express
