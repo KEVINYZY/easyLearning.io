@@ -13,6 +13,7 @@ function rpclib {
     mkdir -p rpclib/build
     cd rpclib/build
     cmake .. -DCMAKE_INSTALL_PREFIX=../../install
+    make install
 }
 
 function auto {
