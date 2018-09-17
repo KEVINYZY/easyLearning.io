@@ -1,5 +1,6 @@
 APP_SRCS += engine.cpp \
 			express.cpp \
+			express_help.cpp \
 			function.cpp \
 			operator.cpp \
 			operator_help.cpp \

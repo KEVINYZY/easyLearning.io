@@ -7,5 +7,6 @@
 #include "function.h"
 #include "engine.h"
 
+#include "express_help.h"
 #include "generated/express_api.h"
 

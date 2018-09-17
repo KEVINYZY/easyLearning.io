@@ -1,4 +1,6 @@
+#include <rpc/server.h>
 #include "express.h"
+
 
 #include <iostream>
 
@@ -16,9 +18,7 @@ void testATen() {
     std::cout << ac[10][10] << std::endl;
 }
 
-int main(const int argc, const char* argv[]) {
-    testATen();
-
+void testExpress() {
     at::Tensor foo = at::CPU(at::kFloat).rand({3,3});
     auto var = express::make_variable(foo, true);
 
@@ -39,4 +39,13 @@ int main(const int argc, const char* argv[]) {
     auto grad = express::make_variable(bar, false);
     int result = express::backward(var2, grad);
     std::cout << "backward result = " << result << std::endl;
+}
+
+int main(const int argc, const char* argv[]) {
+    testATen();
+    testExpress();
+
+    rpc::server srv(8080); // listen on TCP port 8080
+    srv.run(); // blocking call
+    return 0;
 }

@@ -1,7 +1,7 @@
 INC = -I./ -I./generated -I../install/include \
-	  -I/usr/local/include -I/usr/include
+	  -I/usr/local/include -I/usr/include 
 DEF = 
-LINK = -L../install/lib -lATen
+LINK = -L../install/lib -lATen -lrpc
 
 AR = ar
 CC = g++
