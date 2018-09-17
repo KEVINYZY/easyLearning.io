@@ -59,12 +59,15 @@ def auto(aten_path, out):
     with open( os.path.join(out, 'autograd_functions.txt'), "w") as f:
         allInfo = yaml.dump(autograd_functions)
         f.write(allInfo);
-    
+
     from gen_apis import gen_apis
     gen_apis(out, autograd_functions)
 
     from gen_operators import gen_operators
     gen_operators(out, autograd_functions)
+
+    from gen_rpcs import gen_rpcs
+    gen_rpcs(out, autograd_functions)
 
 def main():
     parser = argparse.ArgumentParser(
