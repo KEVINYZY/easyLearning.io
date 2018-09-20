@@ -37,6 +37,9 @@ public:
         return ret;
     }
 
+    void test() {
+        std::cout << " ############# " << std::endl;
+    }
 
 protected:
     ::rpc::server* rpcServer_;

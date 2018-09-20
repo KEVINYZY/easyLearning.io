@@ -14,11 +14,8 @@ RPC_DEFINE = CodeTemplate("""\
 
 
 def gen_rpcs(out, autograd_functions):
-    
-    
-    
-    
-    
+
+
     top_env = {
         "auto_rpc_binds" : [],
         "auto_rpc_defines" : []

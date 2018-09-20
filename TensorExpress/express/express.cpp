@@ -17,7 +17,7 @@ ExpressBackend::~ExpressBackend() {
 }
 
 void ExpressBackend::run() {
-    rpcServer_->async_run();
+    rpcServer_->async_run(1);
 }
 }} // namespace express::rpc
 
@@ -68,6 +68,9 @@ void testExpress() {
 void  doTest() {
     testATen();
     testExpress();
+
+    rpc::client c("127.0.0.1", 8080);
+    c.call("Test");
 }
 
 int main(const int argc, const char* argv[]) {
