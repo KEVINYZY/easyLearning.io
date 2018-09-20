@@ -1,9 +1,32 @@
-#include <rpc/server.h>
-#include <rpc/client.h>
+
 #include <unistd.h>
 #include <iostream>
 
+#include "express_help.h"
 #include "express.h"
+#include "generated/express_api.h"
+#include "generated/express_rpc.h"
+
+namespace express { namespace rpc {
+ExpressBackend::ExpressBackend(unsigned int port) {
+    rpcServer_ = bindRPCs(this, port);
+}
+
+ExpressBackend::~ExpressBackend() {
+    delete rpcServer_;
+}
+
+void ExpressBackend::run() {
+    rpcServer_->async_run();
+}
+}} // namespace express::rpc
+
+
+
+// =====================================================================
+//
+// Simple test code
+// =====================================================================
 
 void testATen() {
     // testing basic tensor from ATen
@@ -42,21 +65,19 @@ void testExpress() {
     std::cout << "backward result = " << result << std::endl;
 }
 
-int main(const int argc, const char* argv[]) {
+void  doTest() {
     testATen();
     testExpress();
+}
 
-    rpc::server srv(8080); // listen on TCP port 8080
-    srv.bind("add", [](double a, double b) { return a + b; });
+int main(const int argc, const char* argv[]) {
+    express::rpc::ExpressBackend express(8080);
+    express.run();
 
-    srv.async_run(1);
+    doTest();
 
-    std::cout << " Run in client mode " << std::endl;
-    rpc::client client("127.0.0.1", 8080);
     for(;;) {
-        double five = client.call("add", 2, 3).as<double>();
-        std::cout << "Get result " << five << std::endl;
         sleep(1);
     }
-    return 0;
+
 }

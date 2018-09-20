@@ -8,12 +8,21 @@ from gen_all import template_path,yprint
 RPC_H = CodeTemplate.from_file(template_path + '/express_rpc.h')
 RPC_CPP = CodeTemplate.from_file(template_path + '/express_rpc.cpp')
 
-RPC_DECLARATION = CodeTemplate("""\
-""")
-
 RPC_DEFINE = CodeTemplate("""\
+
 """)
 
 
 def gen_rpcs(out, autograd_functions):
-    pass
+    
+    
+    
+    
+    
+    top_env = {
+        "auto_rpc_binds" : [],
+        "auto_rpc_defines" : []
+    }
+
+    write(out, "express_rpc.h", RPC_H, top_env)
+    write(out, "express_rpc.cpp", RPC_CPP, top_env)
