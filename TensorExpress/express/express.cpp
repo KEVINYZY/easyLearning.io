@@ -1,8 +1,9 @@
 #include <rpc/server.h>
-#include "express.h"
-
-
+#include <rpc/client.h>
+#include <unistd.h>
 #include <iostream>
+
+#include "express.h"
 
 void testATen() {
     // testing basic tensor from ATen
@@ -46,6 +47,16 @@ int main(const int argc, const char* argv[]) {
     testExpress();
 
     rpc::server srv(8080); // listen on TCP port 8080
-    srv.run(); // blocking call
+    srv.bind("add", [](double a, double b) { return a + b; });
+
+    srv.async_run(1);
+
+    std::cout << " Run in client mode " << std::endl;
+    rpc::client client("127.0.0.1", 8080);
+    for(;;) {
+        double five = client.call("add", 2, 3).as<double>();
+        std::cout << "Get result " << five << std::endl;
+        sleep(1);
+    }
     return 0;
 }
