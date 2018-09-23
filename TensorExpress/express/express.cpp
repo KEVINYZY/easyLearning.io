@@ -69,8 +69,10 @@ void  doTest() {
     testATen();
     testExpress();
 
+    std::vector<std::string> outs{"Hello"};
     rpc::client c("127.0.0.1", 8080);
-    c.call("Test");
+    int ret = c.call("Test", outs).as<int>();
+    std::cout << "call return :" << ret << std::endl;
 }
 
 int main(const int argc, const char* argv[]) {
