@@ -17,8 +17,8 @@ int test(ExpressBackend* backend) {
 ::rpc::server* bindRPCs(ExpressBackend* backend, unsigned int port) {
     ::rpc::server* srv = new ::rpc::server(port);
 
-    srv->bind("Test", [&backend](const std::vector<std::string> outs)->int{return test(backend);});
     ${auto_rpc_binds}
+
     return srv;
 }
 
