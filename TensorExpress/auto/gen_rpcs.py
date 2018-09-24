@@ -11,6 +11,12 @@ RPC_CPP = CodeTemplate.from_file(template_path + '/express_rpc.cpp')
 RPC_DEFINE = CodeTemplate("""\
 int ${api_name}(ExpressBackend* backend, const std::vector<std::string> outs, ${api_args}) {
 
+    ${arg_str_to_varptr}
+
+    //auto ret = ${api_name}(${call_seq});
+
+    ${ret_to_outs}
+
     return 0;
 }
 """)
@@ -62,6 +68,10 @@ def gen_rpc_define(func):
     declaration = func["declaration"]
 
     env = gen_rpc_bind(func)
+    env["arg_str_to_varptr"] = ""
+    env["call_seq"] = ""
+    env["ret_to_outs"] = ""
+
     return env
 
 def gen_rpc_bind(func):
