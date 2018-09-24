@@ -782,11 +782,12 @@
 - name: prelu_forward(Tensor self, Tensor weight)
   self, weight: prelu_backward(grad, self, weight, grad_input_mask)
 
-- name: rrelu_with_noise_forward(Tensor self, Tensor noise, Scalar lower, Scalar upper, bool training, Generator generator)
-  self: rrelu_with_noise_backward(grad, self, noise, lower, upper, training)
+# TODO: disable none default Generator
+#- name: rrelu_with_noise_forward(Tensor self, Tensor noise, Scalar lower, Scalar upper, bool training, Generator generator)
+#  self: rrelu_with_noise_backward(grad, self, noise, lower, upper, training)
 
-- name: rrelu_with_noise_forward_(Tensor self, Tensor noise, Scalar lower, Scalar upper, bool training, Generator generator)
-  self: rrelu_with_noise_backward(grad, output, noise, lower, upper, training)
+#- name: rrelu_with_noise_forward_(Tensor self, Tensor noise, Scalar lower, Scalar upper, bool training, Generator generator)
+#  self: rrelu_with_noise_backward(grad, output, noise, lower, upper, training)
 
 - name: softmax_forward(Tensor self, int64_t dim)
   self: softmax_backward(grad, self, dim, output)
