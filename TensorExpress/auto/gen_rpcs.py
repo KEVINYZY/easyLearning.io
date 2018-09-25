@@ -51,6 +51,7 @@ def gen_rpcs(out, autograd_functions):
             all_rpc_defines.append(RPC_DEFINE.substitute(define))
 
         elif ( "Tensor"  in func["declaration"]["method_of"] and func["declaration"]["inplace"] == True):
+            ## TODO
             pass
         else:
             pass
@@ -92,10 +93,22 @@ def gen_rpc_define(func):
 
         call_seq = call_seq + arg_name + ","
 
+    ret_to_outs = []
+    api_return = declaration["return_type"].replace("Tensor", "varptr")
+    if ( api_return.startswith("std::tuple") ):
+        for i in range( len ( declaration["returns"]) ):
+            ret_to_outs.append("backend->setVar(outs[{}], std::get<{}>(ret));".format(i,i) )
+    elif api_return.startswith("varptr") :
+        ret_to_outs.append("backend->setVar(outs[0], ret);")
+    else:
+        raise RuntimeError(
+                "Unsupport return type : '{}' for op '{}' "
+                .format(env["api_return"], func["op"] ) )
+
     env["real_api_name"] = func["declaration"]["api_name"]
     env["arg_to_varptr"] = arg_to_varptr
     env["call_seq"] = call_seq[:-1]
-    env["ret_to_outs"] = ""
+    env["ret_to_outs"] = ret_to_outs
 
     return env
 
@@ -133,5 +146,3 @@ def gen_rpc_bind(func):
     env["args_name"] = args_name
 
     return env
-
-
