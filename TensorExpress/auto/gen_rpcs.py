@@ -11,9 +11,9 @@ RPC_CPP = CodeTemplate.from_file(template_path + '/express_rpc.cpp')
 RPC_DEFINE = CodeTemplate("""\
 int ${api_name}(ExpressBackend* backend, const std::vector<std::string> outs, ${api_args}) {
 
-    ${arg_str_to_varptr}
+    ${arg_to_varptr}
 
-    //auto ret = ${api_name}(${call_seq});
+    auto ret = ::express::api::${real_api_name}(${call_seq});
 
     ${ret_to_outs}
 
@@ -68,8 +68,33 @@ def gen_rpc_define(func):
     declaration = func["declaration"]
 
     env = gen_rpc_bind(func)
-    env["arg_str_to_varptr"] = ""
-    env["call_seq"] = ""
+
+    arg_to_varptr = []
+    call_seq = ""
+    for i in range( len(declaration["formals"]) ):
+        arg = declaration["args"][i]
+        if ("default" in declaration["arguments"][i]):
+            continue
+
+        arg_name = declaration["args"][i]
+        if ( declaration["arguments"][i]["simple_type"] == "Tensor" ):
+            arg_name = arg_name + "_"
+
+            varptr = 'auto {}_ = backend->getVar({});'.format(arg, arg)
+            arg_to_varptr.append(varptr)
+            
+        if ( declaration["arguments"][i]["simple_type"] == "TensorList" ):
+            arg_name = arg_name + "_"
+
+            varptr = 'const_varptr_list {}_;\n'.format( declaration["args"][i] )
+            varptr = varptr + 'for (auto &i : {}) {}_.push_back( backend->getVar(i) );\n'.format( arg, arg )
+            arg_to_varptr.append(varptr)
+
+        call_seq = call_seq + arg_name + ","
+
+    env["real_api_name"] = func["declaration"]["api_name"]
+    env["arg_to_varptr"] = arg_to_varptr
+    env["call_seq"] = call_seq[:-1]
     env["ret_to_outs"] = ""
 
     return env
@@ -93,7 +118,7 @@ def gen_rpc_bind(func):
             arg = arg.replace("TensorList", "const std::vector<std::string>&")
 
         if ( declaration["arguments"][i]["simple_type"] == "IntList" ):
-            arg = arg.replace("IntList", "const std::vector<int>&")
+            arg = arg.replace("IntList", "const std::vector<int64_t>&")
 
         if ( declaration["arguments"][i]["simple_type"] == "Scalar" ):
             arg = arg.replace("Scalar", "float")
